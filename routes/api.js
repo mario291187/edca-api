@@ -17,6 +17,14 @@ router.post('/new/contractingprocess', function(req, res){
 
 /* Updates */
 
+router.post('/update/stage', function (req, res){
+    res.json({
+        status: 'ok',
+        msg: ";)"
+    });
+});
+
+
 //Planning
 router.post('/update/planning', function (req, res){
     res.json({
