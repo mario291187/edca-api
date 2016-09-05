@@ -22,7 +22,25 @@ if ( typeof process.env.EDCA_DB != "undefined" ){
 }
 
 
-/* Creates a new contracting process and returns the id */
+/* * * * * * * *
+ * Information *
+ * * * * * * * */
+
+router.post('/list/contractingprocess', function(req, res){
+
+    edca_db.manyOrNone("select id, ocid, stage from contractingprocess ").then(function(data){
+        res.json(data)
+    }).catch(function (error) {
+
+    });
+
+});
+
+
+/* * * * * * * * * * * * * * * *
+ * Creates a new contracting   *
+ * process and returns the id  *
+ * * * * * * * * * * * * * * * */
 router.post('/new/contractingprocess', function(req, res){
     res.json ({
         status : 'ok',
