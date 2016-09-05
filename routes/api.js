@@ -1,10 +1,26 @@
 var express = require('express');
 var router = express.Router();
 
+
+var pgp = require ('pg-promise')();
+
+
 /* GET users listing. */
 router.get('/', function(req, res, next) {
     res.send('Contrataciones Abiertas - API');
 });
+
+var edca_db;
+
+if ( typeof process.env.EDCA_DB != "undefined" ){
+    console.log("EDCA_DB: ", process.env.EDCA_DB);
+    edca_db = pgp( process.env.EDCA_DB );
+} else {
+    console.log("Warning: EDCA_DB env variable is not set\n " +
+        " defaulting to -> postgres://tester:test@localhost/edca");
+    edca_db = pgp("postgres://tester:test@localhost/edca");
+}
+
 
 /* Creates a new contracting process and returns the id */
 router.post('/new/contractingprocess', function(req, res){
@@ -15,22 +31,64 @@ router.post('/new/contractingprocess', function(req, res){
     });
 });
 
-/* Updates */
+/* * * * * * * * * * * * * * * * * *
+ * Updates:                        *
+ * entities created with the       *
+ * /new/contractingprocess request *
+ * * * * * * * * * * * * * * * * * */
 
 router.post('/update/stage', function (req, res){
-    res.json({
-        status: 'ok',
-        msg: ";)"
+
+    var cpid = +req.body.cpid;
+    var stage = +req.body.stage;
+
+    if ( isNaN(cpid) || isNaN(stage) || stage < 0 || stage > 4){
+        res.json({
+            status: "ERROR",
+            description: "Error de validación",
+            data : {}
+        })
+    }
+
+    edca_db.one('update contractingprocess set stage = $1 where id = $2 returning id',[
+        cpid,
+        stage
+    ]).then(function (data) {
+        res.json({
+            status: 'Ok',
+            description: "Proceso de contratación actualizado",
+            data: data
+        });
+    }).catch(function(error){
+        console.log(error);
+        res.json({
+            status: 'ERROR',
+            msg: 'Ha ocurrido un error',
+            data: error
+        });
     });
 });
 
-
 //Planning
 router.post('/update/planning', function (req, res){
-    res.json({
-        status: 'ok',
-        msg: ";)"
+
+
+    edca_db.one ('update planning set $... where contractingprocess_id = $...',[
+
+    ]).then(function (data) {
+        res.json({
+            status: "Ok",
+            description: "Los datos han sido actualizados",
+            data: data
+        });
+    }).catch(function (error) {
+        res.json({
+            status:  "Error",
+            description: "Ha ocurrido un error",
+            data: error
+        });
     });
+
 });
 
 // buyer
@@ -42,7 +100,7 @@ router.post('/update/buyer', function (req, res){
 });
 
 // Tender
-router.post('/update/planning', function (req, res){
+router.post('/update/tender', function (req, res){
     res.json({
         status: 'ok',
         msg: ";)"
@@ -50,7 +108,7 @@ router.post('/update/planning', function (req, res){
 });
 
 // Award
-router.post('/update/planning', function (req, res){
+router.post('/update/award', function (req, res){
     res.json({
         status: 'ok',
         msg: ";)"
@@ -58,7 +116,7 @@ router.post('/update/planning', function (req, res){
 });
 
 // Contract
-router.post('/update/planning', function (req, res){
+router.post('/update/contract', function (req, res){
     res.json({
         status: 'ok',
         msg: ";)"
@@ -81,7 +139,9 @@ router.post('/update/publisher', function (req, res){
     });
 });
 
-/* Insertions */
+/* * * * * * * *
+ * Insertions  *
+ * * * * * * * */
 
 // Items
 router.post('/new/item', function (req, res){
@@ -123,11 +183,36 @@ router.post('/new/document', function (req, res){
     });
 });
 
-/* Delete */
+/* * * * * *
+ * Delete  *
+ * * * * * */
 router.post('/delete/contractingprocess',function (req, res ) {
-     res.json({
-         status : 'ok'
-     });
+
+    var cpid = +req.body.cpid;
+
+    if (isNaN(cpid) ){
+        res.json({
+            status: "Error",
+            description: "Error de validación",
+            data: {}
+        });
+    }
+
+    edca_db.one('delete from contractingprocess cascade where id = $1 returning id',[ cpid ]).then(function (data) {
+        res.json({
+            status: "Ok",
+            description: "Proceso eliminado",
+            data: data
+        });
+    }).catch( function(data){
+        res.json({
+            status : 'Error',
+            description: "Ha ocurrido un error",
+            data: data
+        })
+    });
+
+
 });
 
 
