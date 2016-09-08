@@ -446,9 +446,35 @@ router.post('/new/transaction', function (req, res){
 
 // Documents
 router.post('/new/document', function (req, res){
-    res.json({
-        status: 'ok',
-        msg: ";)"
+    edca_db.one('insert into $1~ (contractingprocess_id, document_type, documentid, title, description, url, date_published, date_modified, format, language) values ($2,$3,$4,$5,$6,$7,$8,$9,$10,$11) returning id',
+        [
+            req.body.table,
+            req.body.ocid,
+            req.body.document_type,
+            req.body.documentid,
+            req.body.title,
+            req.body.description,
+            req.body.url,
+            (req.body.date_published!='')?req.body.date_published:null,
+            (req.body.date_modified!='')?req.body.date_modified:null,
+            req.body.format,
+            req.body.language
+        ]).then(function (data) {
+        res.send("Se ha creado un nuevo documento");
+        console.log("new "+ req.body.table + ": ", data);
+
+    }).then(function (data) {
+        res.json({
+            status:"Ok",
+            description: "Se ha registrado un nuevo documento",
+            data: data
+        });
+    }).catch(function(error){
+        res.json({
+            status :  "Error",
+            description:"Ha ocurrido un error",
+            data : error
+        });
     });
 });
 
