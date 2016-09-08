@@ -5,7 +5,7 @@ var router = express.Router();
 var pgp = require ('pg-promise')();
 
 
-/* GET users listing. */
+/* index */
 router.get('/', function(req, res, next) {
     res.send('Contrataciones Abiertas - API');
 });
@@ -22,9 +22,9 @@ if ( typeof process.env.EDCA_DB != "undefined" ){
 }
 
 
-/* * * * * * * *
- * Information *
- * * * * * * * */
+/* * * * * * * * * * * *
+ * Getting information *
+ * * * * * * * * * * * */
 
 router.post('/list/contractingprocess', function(req, res){
 
@@ -44,6 +44,13 @@ router.post('/list/contractingprocess', function(req, res){
     });
 
 });
+
+
+//documents
+
+//tenderers
+
+//suppliers
 
 
 /* * * * * * * * * * * * * * * *
@@ -135,10 +142,13 @@ router.post('/update/contractingprocess', function (req, res){
         });
     }
 
-    edca_db.one('update contractingprocess set stage = $1 where id = $2 returning id',[
-        ocid,
-        stage
-    ]).then(function (data) {
+    edca_db.one('update contractingprocess set ocid = $1, stage = $2 where id = $3 returning id',
+        [
+            ocid,
+            stage,
+            localid
+        ]
+    ).then(function (data) {
         res.json({
             status: 'Ok',
             description: "Proceso de contratación actualizado",
@@ -197,7 +207,7 @@ router.post('/update/planning', function (req, res){
 
 });
 
-// organizations -> buyer, ...
+// organizations -> buyer, tenderers, suppliers
 router.post('/update/organization/:type', function (req, res){
 
 
@@ -387,7 +397,7 @@ router.post('/update/publisher', function (req, res){
  * * * * * * * */
 
 // Items
-router.post('/new/item', function (req, res){
+router.post('/new/item:stage', function (req, res){
 
 
     edca_db.one('insert into $1~ (contractingprocess_id, itemid, description, classification_scheme, classification_id, classification_description, classification_uri,' +
@@ -424,24 +434,109 @@ router.post('/new/item', function (req, res){
 });
 
 // Amendment changes
-router.post('/new/amendmentchange', function (req, res){
+router.post('/new/amendmentchange:stage', function (req, res){
+
+    edca_db.one('insert into $1~ (contractingprocess_id, property, former_value) values ($2,$3,$4) returning id',[
+        req.body.table,
+        req.body.localid,
+        req.body.property,
+        req.body.former_value
+    ]).then(function (data) {
+        res.send({
+            stautus : "Ok",
+            description : "El cambio ha sido registrado",
+            data : data
+        });
+    }).catch(function (error) {
+        res.send({
+            stautus : "Error",
+            description : "Ha ocurrido un error",
+            data : error
+        });
+    });
 
 });
 
-// Organizations -> tenderers, suppliers, ...
-router.post('/new/organization', function (req, res){
-    res.json({
-        status: 'ok',
-        msg: ";)"
+// Organizations -> tenderers, suppliers
+router.post('/new/organization:type', function (req, res){
+    edca_db.one("insert into $17~" +
+        " (contractingprocess_id, identifier_scheme, identifier_id, identifier_legalname, identifier_uri, name, address_streetaddress," +
+        " address_locality, address_region, address_postalcode, address_countryname, contactpoint_name, contactpoint_email, contactpoint_telephone," +
+        " contactpoint_faxnumber, contactpoint_url) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) returning id",
+        [
+            req.body.localid,
+            req.body.identifier_scheme,
+            req.body.identifier_id,
+            req.body.identifier_legalname,
+            req.body.identifier_uri,
+            req.body.name,
+            req.body.address_streetaddress,
+            req.body.address_locality,
+            req.body.address_region,
+            req.body.address_postalcode,
+            req.body.address_countryname,
+            req.body.contactpoint_name,
+            req.body.contactpoint_email,
+            req.body.contactpoint_telephone,
+            req.body.contactpoint_faxnumber,
+            req.body.contactpoint_url,
+            req.body.table
+        ]
+    ).then(function (data) {
+        res.send({
+            stautus : "Ok",
+            description : "La organización ha sido registrada",
+            data : data
+        });
+    }).catch(function (error) {
+        res.send({
+            stautus : "Error",
+            description : "Ha ocurrido un error",
+            data : error
+        });
     });
 });
 
 // Transactions
 router.post('/new/transaction', function (req, res){
-    res.json({
-        status: 'ok',
-        msg: ";)"
+
+    edca_db.one('insert into implementationtransactions (contractingprocess_id, transactionid, source, implementation_date, value_amount, value_currency, ' +
+        'providerorganization_scheme,providerorganization_id,providerorganization_legalname,providerorganization_uri,' +
+        'receiverorganization_scheme,receiverorganization_id,receiverorganization_legalname,receiverorganization_uri, uri) ' +
+        'values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) returning id',[
+        req.body.localid,
+        req.body.transactionid,
+        req.body.source,
+        (req.body.implementation_date != '')?req.body.implementation_date:null,
+        (isNaN(req.body.value_amount)?null:req.body.value_amount),
+        req.body.value_currency,
+
+        req.body.providerorganization_scheme,
+        req.body.providerorganization_id,
+        req.body.providerorganization_legalname,
+        req.body.providerorganization_uri,
+
+        req.body.receiverorganization_scheme,
+        req.body.receiverorganization_id,
+        req.body.receiverorganization_legalname,
+        req.body.receiverorganization_uri,
+
+        req.body.uri
+    ]).then(function (data) {
+        res.json({
+            status :  "Ok",
+            description: "Transacción registrada",
+            data : data
+        });
+    }).catch(function (error) {
+        res.json({
+            status :  "Error",
+            description:"Ha ocurrido un error",
+            data : error
+        });
     });
+
+
 });
 
 // Documents
@@ -449,7 +544,7 @@ router.post('/new/document', function (req, res){
     edca_db.one('insert into $1~ (contractingprocess_id, document_type, documentid, title, description, url, date_published, date_modified, format, language) values ($2,$3,$4,$5,$6,$7,$8,$9,$10,$11) returning id',
         [
             req.body.table,
-            req.body.ocid,
+            req.body.localid,
             req.body.document_type,
             req.body.documentid,
             req.body.title,
@@ -506,7 +601,6 @@ router.post('/delete/contractingprocess',function (req, res ) {
             data: data
         })
     });
-
 
 });
 
