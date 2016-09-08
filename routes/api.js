@@ -388,18 +388,44 @@ router.post('/update/publisher', function (req, res){
 
 // Items
 router.post('/new/item', function (req, res){
-    res.json({
-        status: 'ok',
-        msg: ";)"
+
+
+    edca_db.one('insert into $1~ (contractingprocess_id, itemid, description, classification_scheme, classification_id, classification_description, classification_uri,' +
+        ' quantity, unit_name, unit_value_amount, unit_value_currency) values ($2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) returning id',
+        [
+            req.body.table,
+            req.body.localid,
+            req.body.itemid,
+            req.body.description,
+            req.body.classification_scheme,
+            req.body.classification_id,
+            req.body.classification_description,
+            req.body.classification_uri,
+            (isNaN(req.body.quantity)?null:req.body.quantity),
+            req.body.unit_name,
+            (isNaN(req.body.unit_value_amount)?null:req.body.unit_value_amount),
+            req.body.unit_value_currency
+        ]
+    ).then(function (data) {
+        res.json({
+            status:  "Ok",
+            description : "Se ha creado un nuevo artículo",
+            data : data
+        });
+
+    }).catch(function (error) {
+        res.json({
+            status:  "Ok",
+            description : "Ha ocurrido un error",
+            data : error
+        });
     });
+
 });
 
 // Amendment changes
 router.post('/new/amendmentchange', function (req, res){
-    res.json({
-        status: 'ok',
-        msg: ";)"
-    });
+
 });
 
 // Organizations -> tenderers, suppliers, ...
