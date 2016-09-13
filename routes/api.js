@@ -219,7 +219,8 @@ router.post('/update/tender', function (req, res){
         (req.body.awardperiod_startdate instanceof Date)?req.body.awardperiod_startdate:null,
         (req.body.awardperiod_enddate instanceof Date)?req.body.awardperiod_enddate:null,
         req.body.numberoftenderers,
-        (req.body.amendment_date!='')?req.body.amendment_date:null,
+        //(req.body.amendment_date!='')?req.body.amendment_date:null,
+        (req.body.amendment_date instanceof Date )?req.body.amendment_date:null,
         req.body.amendment_rationale
     ]).then(function (data) {
         res.json({
