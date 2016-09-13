@@ -50,51 +50,39 @@ router.post('/list/entities', function(req, res){
  * Updates *
  * * * * * */
 
-router.post('/update/contractingprocess', function (req, res){
+router.post("/update/contractingprocess", function (req, res){
 
     var contractingprocess_id = +req.body.contractingprocess_id;
     var stage = +req.body.stage; // etapa en que se encuentra la contratación: 0 -> planning, 1 -> licitación, 2 -> adjudicación, 3 -> contratación, 4 -> implementación
     var ocid = req.body.ocid; // Open Contracting ID ->  Es un ID global asignado al proceso de contratación, puede ser cualquier cosa
 
-    //column set
+
     if ( isNaN( contractingprocess_id ) || isNaN(stage) || stage < 0 || stage > 4){
 
-        edca_db.oneOrNone(" update contractingprocess set stage = $1 where localid = $2 returning id ", [ stage, contractingprocess_id ]).then(function (data) {
-            res.send({
-                status:"Ok",
-                description: "Proceso de contratación: Etapa actualizada",
-                data: data
-            })
-
-        }).catch(function (error) {
-            console.log(error);
-
+        edca_db.one("update contractingprocess set ocid = $1, stage = $2 where id = $3 returning id", [
+            ocid,
+            stage,
+            contractingprocess_id // id del proceso de contratación
+        ]).then(function (data) {
             res.json({
-                status : "Error",
-                description : "Ha ocurrido un error",
-                data : error
+                status: "Ok",
+                description: "Proceso de contratación actualizado",
+                data: data
+            });
+        }).catch(function(error){
+            res.json({
+                status: "Error",
+                description: 'Ha ocurrido un error',
+                data: error
             });
         });
+    }else{
+        res.json({
+            status: "Error",
+            description: "Datos incorrectos",
+            data : {}
+        })
     }
-
-    edca_db.one('update contractingprocess set ocid = $1, stage = $2 where id = $3 returning id', [
-        ocid,
-        stage,
-        contractingprocess_id
-    ]).then(function (data) {
-        res.json({
-            status: 'Ok',
-            description: "Proceso de contratación actualizado",
-            data: data
-        });
-    }).catch(function(error){
-        console.log(error);
-        res.json({
-            status: 'ERROR',
-            msg: 'Ha ocurrido un error',
-            data: error
-        });
-    });
 });
 
 //Planning
@@ -458,27 +446,25 @@ router.post('/new/organization', function (req, res){
     edca_db.one("insert into $17~" +
         " (contractingprocess_id, identifier_scheme, identifier_id, identifier_legalname, identifier_uri, name, address_streetaddress," +
         " address_locality, address_region, address_postalcode, address_countryname, contactpoint_name, contactpoint_email, contactpoint_telephone," +
-        " contactpoint_faxnumber, contactpoint_url) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) returning id",
-        [
-            req.body.contractingprocess_id, // id del proceso de contratación
-            req.body.identifier_scheme,
-            req.body.identifier_id,
-            req.body.identifier_legalname,
-            req.body.identifier_uri,
-            req.body.name,
-            req.body.address_streetaddress,
-            req.body.address_locality,
-            req.body.address_region,
-            req.body.address_postalcode,
-            req.body.address_countryname,
-            req.body.contactpoint_name,
-            req.body.contactpoint_email,
-            req.body.contactpoint_telephone,
-            req.body.contactpoint_faxnumber,
-            req.body.contactpoint_url,
-            req.body.table // tabla donde se inserta la organización -> tenderer, supplier
-        ]
-    ).then(function (data) {
+        " contactpoint_faxnumber, contactpoint_url) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) returning id", [
+        req.body.contractingprocess_id, // id del proceso de contratación
+        req.body.identifier_scheme,
+        req.body.identifier_id,
+        req.body.identifier_legalname,
+        req.body.identifier_uri,
+        req.body.name,
+        req.body.address_streetaddress,
+        req.body.address_locality,
+        req.body.address_region,
+        req.body.address_postalcode,
+        req.body.address_countryname,
+        req.body.contactpoint_name,
+        req.body.contactpoint_email,
+        req.body.contactpoint_telephone,
+        req.body.contactpoint_faxnumber,
+        req.body.contactpoint_url,
+        req.body.table // tabla donde se inserta la organización -> tenderer, supplier
+    ]).then(function (data) {
         res.send({
             stautus : "Ok",
             description : "La organización ha sido registrada",
