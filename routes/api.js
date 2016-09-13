@@ -52,13 +52,11 @@ router.post('/list/entities', function(req, res){
 
 router.post('/update/contractingprocess', function (req, res){
 
-    var contractingprocess_id = +req.body.localid;
-    var stage = +req.body.stage;
-    var ocid = req.body.ocid;
+    var contractingprocess_id = +req.body.contractingprocess_id;
+    var stage = +req.body.stage; // etapa en que se encuentra la contratación: 0 -> planning, 1 -> licitación, 2 -> adjudicación, 3 -> contratación, 4 -> implementación
+    var ocid = req.body.ocid; // Open Contracting ID ->  Es un ID global asignado al proceso de contratación, puede ser cualquier cosa
 
     //column set
-
-
     if ( isNaN( contractingprocess_id ) || isNaN(stage) || stage < 0 || stage > 4){
 
         edca_db.oneOrNone(" update contractingprocess set stage = $1 where localid = $2 returning id ", [ stage, contractingprocess_id ]).then(function (data) {
