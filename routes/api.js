@@ -78,10 +78,10 @@ router.post('/update/contractingprocess', function (req, res){
     }
 
     edca_db.one('update contractingprocess set ocid = $1, stage = $2 where id = $3 returning id', [
-            ocid,
-            stage,
-            contractingprocess_id
-        ]).then(function (data) {
+        ocid,
+        stage,
+        contractingprocess_id
+    ]).then(function (data) {
         res.json({
             status: 'Ok',
             description: "Proceso de contratación actualizado",
@@ -101,7 +101,6 @@ router.post('/update/contractingprocess', function (req, res){
 router.post('/update/planning', function (req, res){
 
     edca_db.tx(function (t) {
-
         return this.bath([
             //planning
             this.one("update planning set rationale = $1 where ContractingProcess_id = $2 returning id", [
@@ -143,31 +142,30 @@ router.post('/update/planning', function (req, res){
 // organizations -> buyer, tenderers, suppliers
 router.post('/update/organization/', function (req, res){
 
-
     edca_db.one("update $1~ set identifier_scheme= $3, identifier_id =$4, identifier_legalname=$5, identifier_uri=$6, name = $7, address_streetaddress=$8," +
         " address_locality=$9, address_region =$10, address_postalcode=$11, address_countryname=$12, contactpoint_name=$13, contactpoint_email=$14, contactpoint_telephone=$15," +
         " contactpoint_faxnumber=$16, contactpoint_url=$17 where ContractingProcess_id = $2 returning id", [
-            req.body.table, //  tabla donde se inserta el registro -> buyer, tendererer, supplier
-            req.body.contractingprocess_id, // id del proceso de contratación
-            req.body.identifier_scheme,
-            req.body.identifier_id,
-            req.body.identifier_legalname,
-            req.body.identifier_uri,
-            req.body.name,
-            req.body.address_streetaddress,
-            req.body.address_locality,
-            req.body.address_region,
-            req.body.address_postalcode,
-            req.body.address_countryname,
-            req.body.contactpoint_name,
-            req.body.contactpoint_email,
-            req.body.contactpoint_telephone,
-            req.body.contactpoint_faxnumber,
-            req.body.contactpoint_url
-        ]).then( function (data) {
+        req.body.table, //  tabla donde se inserta el registro, opciones -> buyer, tendererer, supplier
+        req.body.contractingprocess_id, // id del proceso de contratación
+        req.body.identifier_scheme,
+        req.body.identifier_id,
+        req.body.identifier_legalname,
+        req.body.identifier_uri,
+        req.body.name,
+        req.body.address_streetaddress,
+        req.body.address_locality,
+        req.body.address_region,
+        req.body.address_postalcode,
+        req.body.address_countryname,
+        req.body.contactpoint_name,
+        req.body.contactpoint_email,
+        req.body.contactpoint_telephone,
+        req.body.contactpoint_faxnumber,
+        req.body.contactpoint_url
+    ]).then( function (data) {
         res.json({
             status: 'Ok',
-            description : "Comprador actualizado",
+            description : "Organización actualizada",
             data : data
         });
     }).catch(function(error){
@@ -188,7 +186,7 @@ router.post('/update/tender', function (req, res){
         "awardperiod_enddate=$23, numberoftenderers=$24, amendment_date=$25, amendment_rationale=$26" +
         " where ContractingProcess_id = $1 returning id", [
         req.body.contractingprocess_id, //id del proceso de contratación
-        req.body.tenderid,
+        req.body.tenderid, // id de licitación, puede ser cualquier cosa
         req.body.title,
         req.body.description,
         req.body.status,
@@ -236,7 +234,7 @@ router.post('/update/award', function (req, res){
         " where ContractingProcess_id = $1 returning id",
         [
             req.body.contractingprocess_id, // id del proceso de contratación
-            req.body.awardid,
+            req.body.awardid, // id de adjudicación, puede ser cualquier cosa
             req.body.title,
             req.body.description,
             req.body.status,
@@ -250,7 +248,7 @@ router.post('/update/award', function (req, res){
         ]
     ).then(function(data){
         res.json ({
-           status: "Ok",
+            status: "Ok",
             description: "Etapa de ajudicación actualizada",
             data: data
         });
@@ -300,12 +298,12 @@ router.post('/update/contract', function (req, res){
 // Publisher
 router.post('/update/publisher', function (req, res){
     edca_db.one("update publisher set name=$2, scheme=$3, uid=$4, uri=$5 where id = $1 returning id", [
-            req.body.contractingprocess_id, //id del proceso de contratación
-            req.body.name,
-            req.body.scheme,
-            req.body.uid,
-            req.body.uri
-        ]).then(function (data) {
+        req.body.contractingprocess_id, //id del proceso de contratación
+        req.body.name,
+        req.body.scheme,
+        req.body.uid,
+        req.body.uri
+    ]).then(function (data) {
         res.json({
             status:  "Ok",
             description : "Publisher actualizado",
@@ -379,19 +377,19 @@ router.post('/new/item', function (req, res){
 
     edca_db.one('insert into $1~ (contractingprocess_id, itemid, description, classification_scheme, classification_id, classification_description, classification_uri,' +
         ' quantity, unit_name, unit_value_amount, unit_value_currency) values ($2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) returning id', [
-            req.body.table, // tabla donde se inserta -> awarditems, ...
-            req.body.contractingprocess_id, // id del proceso de contratación
-            req.body.itemid,
-            req.body.description,
-            req.body.classification_scheme,
-            req.body.classification_id,
-            req.body.classification_description,
-            req.body.classification_uri,
-            (isNaN(req.body.quantity)?null:req.body.quantity),
-            req.body.unit_name,
-            (isNaN(req.body.unit_value_amount)?null:req.body.unit_value_amount),
-            req.body.unit_value_currency
-        ]).then(function (data) {
+        req.body.table, // tabla donde se inserta el item, opciones -> tenderitems, awarditems, ...
+        req.body.contractingprocess_id, // id del proceso de contratación
+        req.body.itemid,
+        req.body.description,
+        req.body.classification_scheme,
+        req.body.classification_id,
+        req.body.classification_description,
+        req.body.classification_uri,
+        (isNaN(req.body.quantity)?null:req.body.quantity),
+        req.body.unit_name,
+        (isNaN(req.body.unit_value_amount)?null:req.body.unit_value_amount),
+        req.body.unit_value_currency
+    ]).then(function (data) {
         res.json({
             status:  "Ok",
             description : "Se ha creado un nuevo artículo",
@@ -518,7 +516,7 @@ router.post('/new/transaction', function (req, res){
 router.post('/new/document', function (req, res){
     edca_db.one('insert into $1~ (contractingprocess_id, document_type, documentid, title, description, url, date_published, date_modified, format, language) values ($2,$3,$4,$5,$6,$7,$8,$9,$10,$11) returning id',
         [
-            req.body.table, //tabla donde se inserta el documento
+            req.body.table, //tabla donde se inserta el documento, opciones: planningdocuments, tenderdocuments, awarddocuments, contractdocuments ...
             req.body.contractingprocess_id, // id del proceso de contratación
             req.body.document_type,
             req.body.documentid, //id del ducumento, puede ser cualquier cosa
