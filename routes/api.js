@@ -188,26 +188,15 @@ router.post('/update/tender', function (req, res){
         req.body.awardcriteria_details,
         req.body.submissionmethod,
         req.body.submissionmethod_details,
-        /*(req.body.tenderperiod_startdate!='')?req.body.tenderperiod_startdate:null,
-        (req.body.tenderperiod_enddate!='')?req.body.tenderperiod_enddate:null,
-        (req.body.enquiryperiod_startdate!='')?req.body.enquiryperiod_startdate:null,
-        (req.body.enquiryperiod_enddate!='')?req.body.enquiryperiod_enddate:null,*/
-
         (req.body.tenderperiod_startdate instanceof Date)?req.body.tenderperiod_startdate:null,
         (req.body.tenderperiod_enddate instanceof Date)?req.body.tenderperiod_enddate:null,
         (req.body.enquiryperiod_startdate instanceof Date)?req.body.enquiryperiod_startdate:null,
         (req.body.enquiryperiod_enddate instanceof Date)?req.body.enquiryperiod_enddate:null,
-
         req.body.hasenquiries,
         req.body.eligibilitycriteria,
-        /*
-        (req.body.awardperiod_startdate!='')?req.body.awardperiod_startdate:null,
-        (req.body.awardperiod_enddate!='')?req.body.awardperiod_enddate:null,
-        */
         (req.body.awardperiod_startdate instanceof Date)?req.body.awardperiod_startdate:null,
         (req.body.awardperiod_enddate instanceof Date)?req.body.awardperiod_enddate:null,
         req.body.numberoftenderers,
-        //(req.body.amendment_date!='')?req.body.amendment_date:null,
         (req.body.amendment_date instanceof Date )?req.body.amendment_date:null,
         req.body.amendment_rationale
     ]).then(function (data) {
@@ -230,8 +219,7 @@ router.post('/update/tender', function (req, res){
 router.post('/update/award', function (req, res){
     edca_db.one("update award set awardid=$2, title= $3, description=$4,status=$5,award_date=$6,value_amount=$7,value_currency=$8,contractperiod_startdate=$9," +
         "contractperiod_enddate=$10,amendment_date=$11,amendment_rationale=$12 " +
-        " where ContractingProcess_id = $1 returning id",
-        [
+        " where ContractingProcess_id = $1 returning id",[
             req.body.contractingprocess_id, // id del proceso de contratación
             req.body.awardid, // id de adjudicación, puede ser cualquier cosa
             req.body.title,
@@ -241,17 +229,11 @@ router.post('/update/award', function (req, res){
             (req.body.award_date instanceof Date)?req.body.award_date:null,
             (isNaN(req.body.value_amount)?null:req.body.value_amount),
             req.body.value_currency,
-            /*
-            (req.body.contractperiod_startdate!='')?req.body.contractperiod_startdate:null,
-            (req.body.contractperiod_enddate!='')?req.body.contractperiod_enddate:null,
-             /home/mtorres/edca-api/routes/api.js
-            */
             (req.body.contractperiod_startdate instanceof Date )?req.body.contractperiod_startdate:null,
             (req.body.contractperiod_enddate instanceof Date )?req.body.contractperiod_enddate:null,
             (req.body.amendment_date instanceof Date )?req.body.amendment_date:null,
             req.body.amendment_rationale
-        ]
-    ).then(function(data){
+        ]).then(function(data){
         res.json ({
             status: "Ok",
             description: "Etapa de ajudicación actualizada",
@@ -278,16 +260,10 @@ router.post('/update/contract', function (req, res){
         req.body.title,
         req.body.description,
         req.body.status,
-        /*
-        (req.body.period_startdate!='')?req.body.period_startdate:null,
-        (req.body.period_enddate!='')?req.body.period_enddate:null,
-        */
         (req.body.period_startdate instanceof Date)?req.body.period_startdate:null,
         (req.body.period_enddate instanceof Date)?req.body.period_enddate:null,
         (isNaN(req.body.value_amount)?null:req.body.value_amount),
         req.body.value_currency,
-        /*(req.body.datesigned!='')?req.body.datesigned:null,
-        (req.body.amendment_date!='')?req.body.amendment_date:null,*/
         (req.body.datesigned instanceof Date )?req.body.datesigned:null,
         (req.body.amendment_date instanceof Date )?req.body.amendment_date:null,
         req.body.amendment_rationale
@@ -295,7 +271,7 @@ router.post('/update/contract', function (req, res){
         res.json({
             status : "Ok",
             description : "Etapa de contrato actualizada",
-            data : error
+            data : data
         })
     }).catch(function (error) {
         res.json ({
@@ -390,7 +366,7 @@ router.post('/new/item', function (req, res){
         ' quantity, unit_name, unit_value_amount, unit_value_currency) values ($2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) returning id', [
         req.body.table, // tabla donde se inserta el item, opciones -> tenderitems, awarditems, ...
         req.body.contractingprocess_id, // id del proceso de contratación
-        req.body.itemid,
+        req.body.itemid, //id del item, puede ser cualquier cosa
         req.body.description,
         req.body.classification_scheme,
         req.body.classification_id,
@@ -489,7 +465,6 @@ router.post('/new/transaction', function (req, res){
         req.body.contractingprocess_id, // id del proceso de contratación
         req.body.transactionid,
         req.body.source,
-        //(req.body.implementation_date != '')?req.body.implementation_date:null,
         (req.body.implementation_date instanceof Date )?req.body.implementation_date:null,
         (isNaN(req.body.value_amount)?null:req.body.value_amount),
         req.body.value_currency,
@@ -533,8 +508,6 @@ router.post('/new/document', function (req, res){
             req.body.title,
             req.body.description,
             req.body.url,
-            /*(req.body.date_published!='')?req.body.date_published:null,
-            (req.body.date_modified!='')?req.body.date_modified:null,*/
             (req.body.date_published instanceof Date )?req.body.date_published:null,
             (req.body.date_modified instanceof Date )?req.body.date_modified:null,
             req.body.format,
@@ -559,7 +532,7 @@ router.post('/new/document', function (req, res){
  * * * * * */
 router.post('/delete/contractingprocess',function (req, res ) {
 
-    var cpid = +req.body. contractingprocess_id; //id del proceso de contratación que se requiere eliminar
+    var cpid = +req.body.contractingprocess_id; //id del proceso de contratación que se requiere eliminar
 
     if (isNaN(cpid) ){
         res.json({
