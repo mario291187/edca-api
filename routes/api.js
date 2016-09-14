@@ -1,7 +1,6 @@
 var express = require('express');
 var router = express.Router();
 
-
 var pgp = require ('pg-promise')();
 
 
@@ -220,20 +219,19 @@ router.post('/update/award', function (req, res){
     edca_db.one("update award set awardid=$2, title= $3, description=$4,status=$5,award_date=$6,value_amount=$7,value_currency=$8,contractperiod_startdate=$9," +
         "contractperiod_enddate=$10,amendment_date=$11,amendment_rationale=$12 " +
         " where ContractingProcess_id = $1 returning id",[
-            req.body.contractingprocess_id, // id del proceso de contratación
-            req.body.awardid, // id de adjudicación, puede ser cualquier cosa
-            req.body.title,
-            req.body.description,
-            req.body.status,
-            //(req.body.award_date!='')?req.body.award_date:null,
-            (req.body.award_date instanceof Date)?req.body.award_date:null,
-            (isNaN(req.body.value_amount)?null:req.body.value_amount),
-            req.body.value_currency,
-            (req.body.contractperiod_startdate instanceof Date )?req.body.contractperiod_startdate:null,
-            (req.body.contractperiod_enddate instanceof Date )?req.body.contractperiod_enddate:null,
-            (req.body.amendment_date instanceof Date )?req.body.amendment_date:null,
-            req.body.amendment_rationale
-        ]).then(function(data){
+        req.body.contractingprocess_id, // id del proceso de contratación
+        req.body.awardid, // id de adjudicación, puede ser cualquier cosa
+        req.body.title,
+        req.body.description,
+        req.body.status,
+        (req.body.award_date instanceof Date)?req.body.award_date:null,
+        (isNaN(req.body.value_amount)?null:req.body.value_amount),
+        req.body.value_currency,
+        (req.body.contractperiod_startdate instanceof Date )?req.body.contractperiod_startdate:null,
+        (req.body.contractperiod_enddate instanceof Date )?req.body.contractperiod_enddate:null,
+        (req.body.amendment_date instanceof Date )?req.body.amendment_date:null,
+        req.body.amendment_rationale
+    ]).then(function(data){
         res.json ({
             status: "Ok",
             description: "Etapa de ajudicación actualizada",
@@ -497,6 +495,34 @@ router.post('/new/transaction', function (req, res){
 
 });
 
+//milestones -> hitos
+router.post("/new/milestone", function (req, res) {
+    edca_db.one('insert into $1~ (contractingprocess_id, milestoneid, title, description, duedate, date_modified, status) values ($2,$3,$4,$5,$6,$7,$8) returning id', [
+        req.body.table, // tabla donde se registra el hito
+        req.body.contractingprocess_id, // id del proceso de contratación
+        req.body.milestoneid, //id del hito, puede ser cualquier cosa
+        req.body.title,
+        req.body.description,
+        (req.body.duedate!='')?req.body.duedate:null,
+        (req.body.date_modified!='')?req.body.date_modified:null,
+        req.body.status
+    ]).then(function (data) {
+        res.json({
+            status :  "Ok",
+            description: "Hito registrado",
+            data : data
+        });
+    }).catch(function(error){
+        res.json({
+            status :  "Error",
+            description:"Ha ocurrido un error",
+            data : error
+        });
+    });
+
+});
+
+
 // Documents
 router.post('/new/document', function (req, res){
     edca_db.one('insert into $1~ (contractingprocess_id, document_type, documentid, title, description, url, date_published, date_modified, format, language) values ($2,$3,$4,$5,$6,$7,$8,$9,$10,$11) returning id',
@@ -532,29 +558,27 @@ router.post('/new/document', function (req, res){
  * * * * * */
 router.post('/delete/contractingprocess',function (req, res ) {
 
-    var cpid = +req.body.contractingprocess_id; //id del proceso de contratación que se requiere eliminar
-
-    if (isNaN(cpid) ){
+    if (isNaN(req.body.contractingprocess_id)){ //id del proceso de contratación que se requiere eliminar
         res.json({
             status: "Error",
             description: "Error de validación",
             data: {}
         });
-    }
-
-    edca_db.one('delete from contractingprocess cascade where id = $1 returning id',[ cpid ]).then(function (data) {
-        res.json({
-            status: "Ok",
-            description: "Proceso eliminado",
-            data: data
+    } else {
+        edca_db.one('delete from contractingprocess cascade where id = $1 returning id', [cpid]).then(function (data) {
+            res.json({
+                status: "Ok",
+                description: "Proceso eliminado",
+                data: data
+            });
+        }).catch(function (data) {
+            res.json({
+                status: 'Error',
+                description: "Ha ocurrido un error",
+                data: data
+            })
         });
-    }).catch( function(data){
-        res.json({
-            status : 'Error',
-            description: "Ha ocurrido un error",
-            data: data
-        })
-    });
+    }
 
 });
 
