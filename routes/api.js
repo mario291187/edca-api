@@ -25,12 +25,14 @@ if ( typeof process.env.EDCA_DB != "undefined" ){
  * Getting information *
  * * * * * * * * * * * */
 
-router.post('/list/entities', function(req, res){
+router.post('/list-entities/', function(req, res){
 
-    edca_db.manyOrNone("select * from $1~ ", [ req.body.entity ]).then(function(data){
+    //falta filtrar por contractingprocess_id 
+
+    edca_db.manyOrNone("select * from $1~ order by id", [ req.body.type ]).then(function(data){
         res.json({
             status: "Ok",
-            Description: "Listado: " + req.body.entity,
+            Description: "Listado: " + req.body.type,
             data: data
         })
     }).catch(function (error) {
@@ -51,17 +53,16 @@ router.post('/list/entities', function(req, res){
 
 router.post("/update/contractingprocess", function (req, res){
 
-    var contractingprocess_id = +req.body.contractingprocess_id;
-    var stage = +req.body.stage; // etapa en que se encuentra la contratación: 0 -> planning, 1 -> licitación, 2 -> adjudicación, 3 -> contratación, 4 -> implementación
-    var ocid = req.body.ocid; // Open Contracting ID ->  Es un ID global asignado al proceso de contratación, puede ser cualquier cosa
+    // contractingprocess_id -> id (consecutivo) del proceso de contratación con el cual se registró en el sistema EDCA
+    // stage -> etapa en que se encuentra la contratación: 0 -> planning, 1 -> licitación, 2 -> adjudicación, 3 -> contratación, 4 -> implementación
+    // Open Contracting ID (ocid)->  Es un ID global asignado al proceso de contratación, puede ser cualquier cosa
 
+    if ( !isNaN( +req.body.contractingprocess_id ) || isNaN( +req.body.stage) || +req.body.stage < 0 || +req.body.stage > 4){
 
-    if ( isNaN( contractingprocess_id ) || isNaN(stage) || stage < 0 || stage > 4){
-
-        edca_db.one("update contractingprocess set ocid = $1, stage = $2 where id = $3 returning id", [
-            ocid,
-            stage,
-            contractingprocess_id // id del proceso de contratación
+        edca_db.one("update contractingprocess set ocid = $1, stage = $2 where id = $3 returning id, ocid, stage", [
+            req.body.ocid,
+            +req.body.stage,
+            +req.body.contractingprocess_id // id del proceso de contratación
         ]).then(function (data) {
             res.json({
                 status: "Ok",
@@ -78,7 +79,7 @@ router.post("/update/contractingprocess", function (req, res){
     }else{
         res.json({
             status: "Error",
-            description: "Datos incorrectos",
+            description: "Mesaje incorrecto",
             data : {}
         })
     }
@@ -282,7 +283,7 @@ router.post('/update/contract', function (req, res){
 
 // Publisher
 router.post('/update/publisher', function (req, res){
-    edca_db.one("update publisher set name=$2, scheme=$3, uid=$4, uri=$5 where id = $1 returning id", [
+    edca_db.one("update publisher set name=$2, scheme=$3, uid=$4, uri=$5 where id = $1 returning contractingprocess_id, id as publisher_id, name, scheme, uid, uri", [
         req.body.contractingprocess_id, //id del proceso de contratación
         req.body.name,
         req.body.scheme,
@@ -394,8 +395,8 @@ router.post('/new/item', function (req, res){
 // Amendment changes
 router.post('/new/amendmentchange', function (req, res){
 
-    edca_db.one('insert into $1~ (contractingprocess_id, property, former_value) values ($2,$3,$4) returning id',[
-        req.body.table, //tabla donde se inserta el cambio
+    edca_db.one('insert into $1~ (contractingprocess_id, property, former_value) values ($2,$3,$4) returning contractingprocess_id, id as amendmentchange_id',[
+        req.body.type, //tabla donde se inserta el cambio
         req.body.contractingprocess_id, // id del proceso de contratación
         req.body.property,
         req.body.former_value
@@ -503,8 +504,8 @@ router.post("/new/milestone", function (req, res) {
         req.body.milestoneid, //id del hito, puede ser cualquier cosa
         req.body.title,
         req.body.description,
-        (req.body.duedate!='')?req.body.duedate:null,
-        (req.body.date_modified!='')?req.body.date_modified:null,
+        (req.body.duedate instanceof Date)?req.body.duedate:null,
+        (req.body.date_modified instanceof Date)?req.body.date_modified:null,
         req.body.status
     ]).then(function (data) {
         res.json({
@@ -556,19 +557,19 @@ router.post('/new/document', function (req, res){
 /* * * * * *
  * Delete  *
  * * * * * */
-router.post('/delete/contractingprocess',function (req, res ) {
+router.post('/delete/',function (req, res ) {
 
-    if (isNaN(req.body.contractingprocess_id)){ //id del proceso de contratación que se requiere eliminar
+    if (isNaN(req.body.object_id) || req.body.type == ''){ //id del proceso de contratación que se requiere eliminar
         res.json({
             status: "Error",
             description: "Error de validación",
             data: {}
         });
     } else {
-        edca_db.one('delete from contractingprocess cascade where id = $1 returning id', [cpid]).then(function (data) {
+        edca_db.one('delete from $1~ cascade where id = $2 returning id', [req.body.type, req.body.object_id]).then(function (data) {
             res.json({
                 status: "Ok",
-                description: "Proceso eliminado",
+                description: "Registro eliminado: "+ req.body.type,
                 data: data
             });
         }).catch(function (data) {
@@ -579,7 +580,6 @@ router.post('/delete/contractingprocess',function (req, res ) {
             })
         });
     }
-
 });
 
 
