@@ -27,7 +27,7 @@ if ( typeof process.env.EDCA_DB != "undefined" ){
 
 router.post('/list-entities/', function(req, res){
 
-    //falta filtrar por contractingprocess_id 
+    //falta filtrar por contractingprocess_id
 
     edca_db.manyOrNone("select * from $1~ order by id", [ req.body.type ]).then(function(data){
         res.json({
@@ -79,7 +79,7 @@ router.post("/update/contractingprocess", function (req, res){
     }else{
         res.json({
             status: "Error",
-            description: "Mesaje incorrecto",
+            description: "Mensaje incorrecto",
             data : {}
         })
     }
