@@ -4,7 +4,9 @@ var pgp = require ('pg-promise')();
 
 /* index */
 router.get('/', function(req, res, next) {
-    res.send('Contrataciones Abiertas - API');
+    res.json({
+        message: "Bienvenido al API de la plataforma de contrataciones abiertas EDCA-MX."
+    });
 });
 
 var edca_db;
