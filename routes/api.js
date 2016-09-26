@@ -25,14 +25,20 @@ if ( typeof process.env.EDCA_DB != "undefined" ){
  * Getting information *
  * * * * * * * * * * * */
 
-router.post('/list-entities/', function(req, res){
+router.get('/get/:entity/:limit/:offset', function(req, res){
 
-    //falta filtrar por contractingprocess_id
+    var entity = req.params.entity;
+    var limit = +req.params.limit;
+    var offset = +req.params.offset;
 
-    edca_db.manyOrNone("select * from $1~ order by id", [ req.body.type ]).then(function(data){
+    edca_db.manyOrNone("select * from $1~ order by id limit $2 offset $3", [
+        entity,
+        limit,
+        offset
+    ]).then(function(data){
         res.json({
             status: "Ok",
-            Description: "Listado: " + req.body.type,
+            description: "Listado: " + entity,
             data: data
         })
     }).catch(function (error) {
@@ -44,6 +50,30 @@ router.post('/list-entities/', function(req, res){
         })
     });
 
+});
+
+router.get('/getbyid/:entity/:id',function(req, res){
+
+    var entity = req.params.entity;
+    var id = req.params.id;
+
+    edca_db.oneOrNone("select * from $1~ where id = $2", [
+        entity,
+        id
+    ]).then(function (data) {
+
+        res.json({
+            status: "Ok",
+            description:"Detalle",
+            data : data
+        })
+    }).catch(function(error){
+        res.json({
+            status: "Error",
+            description:"Ha ocurrido un error",
+            data: error
+        })
+    });
 });
 
 
@@ -557,19 +587,12 @@ router.post('/new/document', function (req, res){
 /* * * * * *
  * Delete  *
  * * * * * */
-router.post('/delete/',function (req, res ) {
+router.delete('/delete/:object/:object_id',function (req, res ) {
 
-    if (isNaN(req.body.object_id) || req.body.type == ''){ //id del proceso de contratación que se requiere eliminar
-        res.json({
-            status: "Error",
-            description: "Error de validación",
-            data: {}
-        });
-    } else {
-        edca_db.one('delete from $1~ cascade where id = $2 returning id', [req.body.type, req.body.object_id]).then(function (data) {
+        edca_db.one('delete from $1~ cascade where id = $2 returning id', [req.params.object, req.params.object_id]).then(function (data) {
             res.json({
                 status: "Ok",
-                description: "Registro eliminado: "+ req.body.type,
+                description: "Objeto eliminado",
                 data: data
             });
         }).catch(function (data) {
@@ -579,7 +602,7 @@ router.post('/delete/',function (req, res ) {
                 data: data
             })
         });
-    }
+
 });
 
 
