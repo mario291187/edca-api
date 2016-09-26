@@ -194,7 +194,7 @@ router.post('/update/organization/:type/:id', function (req, res){
             req.body.contactpoint_url
         ]).then(function (data) {
             res.json({
-                status: 'Ok',
+                status: "Ok",
                 description: "Organización actualizada",
                 data: data
             });
@@ -397,7 +397,7 @@ router.put('/new/contractingprocess', function(req, res){
     }).then(function (data) {
         console.log(data);
         res.json ({
-            status : 'ok',
+            status : "Ok",
             description : "Se ha creado un nuevo registro de proceso de contratación",
             data: data
         });
@@ -455,14 +455,14 @@ router.put('/new/:path/item/', function (req, res){
 
         }).catch(function (error) {
             res.json({
-                status: "Ok",
+                status: "Error",
                 description: "Ha ocurrido un error",
                 data: error
             });
         });
     }else {
         res.json({
-            status : "",
+            status : "Error",
             description : "Ha ocurrido un error",
             data :{}
         })
@@ -508,7 +508,7 @@ router.put('/new/:path/amendmentchange/', function (req, res){
     }else {
         res.json({
             status: "Error",
-            descrition: "",
+            description: "Ha ocurrido un error",
             data: {}
         });
     }
@@ -729,22 +729,99 @@ router.delete('/delete/:path/:object_id',function (req, res ) {
 
     var table = "";
 
-    //switch( req.params.path ){}
+    switch( req.params.path ){
+        case "contractingprocess":
+            table = "contractingprocess";
+            break;
+        //Documents
+        case "planning-document":
+            table = "planningdocuments";
+            break;
+        case "tender-document":
+            table = "tenderdocuments";
+            break;
+        case "award-document":
+            table = "awarddocuments";
+            break;
+        case "contract-document":
+            table = "contractdocuments";
+            break;
+        case "implementation-document":
+            table = "implementationdocuments";
+            break;
+        /*case "tender-milestone-document":
+            table = "tendermilestonedocuments";
+            break;
+        case "implementation-milestone-document":
+            table = "implementationmilestonedocuments";
+            break;*/
+        //Amendment changes
+        case "tender-amendment-change":
+            table = "tenderamendmentchanges";
+            break;
+        case "award-amendment-change":
+            table = "awardamendmentchanges";
+            break;
+        case "contract-amendment-change":
+            table = "contractamendmentchanges";
+            break;
+        //Items
+        case "tender-item":
+            table = "tenderitem";
+            break;
+        case "award-item":
+            table = "awarditem";
+            break;
+        case "contract-item":
+            table = "contractitem";
+            break;
+        //Milestones
+        case "tender-milestone":
+            table = "tendermilestone";
+            break;
+        case "implementation-milestone":
+            table = "implementationmilestone";
+            break;
+        //Transactions
+        case "transaction":
+            table = "implementationtransaction";
+            break;
+        //Tenderers
+        case "tenderer":
+            table = "tenderer";
+            break;
+        //Suppliers
+        case "supplier":
+            table = "supplier";
+            break;
+    }
 
-    edca_db.one('delete from $1~ cascade where id = $2 returning id', [table , req.params.object_id]).then(function (data) {
-        res.json({
-            status: "Ok",
-            description: "Objeto eliminado",
-            data: data
+    if (table != "") {
+        edca_db.one('delete from $1~ cascade where id = $2 returning id', [
+            table,
+            req.params.object_id
+        ]).then(function (data) {
+            res.json({
+                status: "Ok",
+                description: "Objeto eliminado",
+                data: data
+            });
+        }).catch(function (data) {
+            res.json({
+                status: 'Error',
+                description: "Ha ocurrido un error",
+                data: data
+            })
         });
-    }).catch(function (data) {
+    }else {
         res.json({
-            status: 'Error',
+            status : "Error",
             description: "Ha ocurrido un error",
-            data: data
-        })
-    });
-
+            data : {
+                message : "Proporcione correctamente la descripción del elemento que desea eliminar, e.g., 'contract-amendment-change'"
+            }
+        });
+    }
 });
 
 
