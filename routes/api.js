@@ -339,12 +339,18 @@ router.post('/update/publisher', function (req, res){
  * * * * * * * */
 
 // new contracting process
-router.post('/new/contractingprocess', function(req, res){
+router.put('/new/contractingprocess', function(req, res){
+    var ocid = req.body.ocid ;
+    var stage = req.body.stage;
 
     edca_db.tx(function (t) {
 
         return t.one("insert into ContractingProcess (fecha_creacion, hora_creacion, ocid, stage ) values " +
-            "(current_date, current_time, concat('NUEVA_CONTRATACION_', current_date,'_', current_time), 0) returning id").then(function (process) {
+        "(current_date, current_time,  $1, $2)" +
+        " returning id",[
+            ocid,
+            stage
+        ]).then(function (process) {
 
             return t.batch([
                 process = { id : process.id},
@@ -389,7 +395,7 @@ router.post('/new/contractingprocess', function(req, res){
 });
 
 // Items
-router.post('/new/item', function (req, res){
+router.put('/new/item', function (req, res){
 
     edca_db.one('insert into $1~ (contractingprocess_id, itemid, description, classification_scheme, classification_id, classification_description, classification_uri,' +
         ' quantity, unit_name, unit_value_amount, unit_value_currency) values ($2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) returning id', [
@@ -423,7 +429,7 @@ router.post('/new/item', function (req, res){
 });
 
 // Amendment changes
-router.post('/new/amendmentchange', function (req, res){
+router.put('/new/amendmentchange', function (req, res){
 
     edca_db.one('insert into $1~ (contractingprocess_id, property, former_value) values ($2,$3,$4) returning contractingprocess_id, id as amendmentchange_id',[
         req.body.type, //tabla donde se inserta el cambio
@@ -447,7 +453,10 @@ router.post('/new/amendmentchange', function (req, res){
 });
 
 // Organizations -> tenderers, suppliers
-router.post('/new/organization', function (req, res){
+router.put('/new/organization', function (req, res){
+
+    //limitar opciones
+
     edca_db.one("insert into $17~" +
         " (contractingprocess_id, identifier_scheme, identifier_id, identifier_legalname, identifier_uri, name, address_streetaddress," +
         " address_locality, address_region, address_postalcode, address_countryname, contactpoint_name, contactpoint_email, contactpoint_telephone," +
@@ -485,7 +494,7 @@ router.post('/new/organization', function (req, res){
 });
 
 // Transactions
-router.post('/new/transaction', function (req, res){
+router.put('/new/transaction', function (req, res){
 
     edca_db.one('insert into implementationtransactions (contractingprocess_id, transactionid, source, implementation_date, value_amount, value_currency, ' +
         'providerorganization_scheme,providerorganization_id,providerorganization_legalname,providerorganization_uri,' +
@@ -527,7 +536,7 @@ router.post('/new/transaction', function (req, res){
 });
 
 //milestones -> hitos
-router.post("/new/milestone", function (req, res) {
+router.put("/new/milestone", function (req, res) {
     edca_db.one('insert into $1~ (contractingprocess_id, milestoneid, title, description, duedate, date_modified, status) values ($2,$3,$4,$5,$6,$7,$8) returning id', [
         req.body.table, // tabla donde se registra el hito
         req.body.contractingprocess_id, // id del proceso de contratación
@@ -555,7 +564,7 @@ router.post("/new/milestone", function (req, res) {
 
 
 // Documents
-router.post('/new/document', function (req, res){
+router.put('/new/document', function (req, res){
     edca_db.one('insert into $1~ (contractingprocess_id, document_type, documentid, title, description, url, date_published, date_modified, format, language) values ($2,$3,$4,$5,$6,$7,$8,$9,$10,$11) returning id',
         [
             req.body.table, //tabla donde se inserta el documento, opciones: planningdocuments, tenderdocuments, awarddocuments, contractdocuments ...
