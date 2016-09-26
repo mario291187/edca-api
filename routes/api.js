@@ -170,39 +170,48 @@ router.post('/update/planning/:id', function (req, res){
 // organizations -> buyer, tenderers, suppliers
 router.post('/update/organization/:type/:id', function (req, res){
 
-    edca_db.one("update $1~ set identifier_scheme= $3, identifier_id =$4, identifier_legalname=$5, identifier_uri=$6, name = $7, address_streetaddress=$8," +
-        " address_locality=$9, address_region =$10, address_postalcode=$11, address_countryname=$12, contactpoint_name=$13, contactpoint_email=$14, contactpoint_telephone=$15," +
-        " contactpoint_faxnumber=$16, contactpoint_url=$17 where id = $2 returning id", [
-        req.params.type, //  tabla donde se inserta el registro, opciones -> buyer, tendererer, supplier
-        req.params.id, // id de la organización
-        req.body.identifier_scheme,
-        req.body.identifier_id,
-        req.body.identifier_legalname,
-        req.body.identifier_uri,
-        req.body.name,
-        req.body.address_streetaddress,
-        req.body.address_locality,
-        req.body.address_region,
-        req.body.address_postalcode,
-        req.body.address_countryname,
-        req.body.contactpoint_name,
-        req.body.contactpoint_email,
-        req.body.contactpoint_telephone,
-        req.body.contactpoint_faxnumber,
-        req.body.contactpoint_url
-    ]).then( function (data) {
-        res.json({
-            status: 'Ok',
-            description : "Organización actualizada",
-            data : data
+    if ( req.params.type == "buyer" || req.params.type == "tenderer" || req.params.type == "supplier") {
+
+        edca_db.one("update $1~ set identifier_scheme= $3, identifier_id =$4, identifier_legalname=$5, identifier_uri=$6, name = $7, address_streetaddress=$8," +
+            " address_locality=$9, address_region =$10, address_postalcode=$11, address_countryname=$12, contactpoint_name=$13, contactpoint_email=$14, contactpoint_telephone=$15," +
+            " contactpoint_faxnumber=$16, contactpoint_url=$17 where id = $2 returning id", [
+            req.params.type, //  tabla donde se inserta el registro, opciones -> buyer, tendererer, supplier
+            req.params.id, // id de la organización
+            req.body.identifier_scheme,
+            req.body.identifier_id,
+            req.body.identifier_legalname,
+            req.body.identifier_uri,
+            req.body.name,
+            req.body.address_streetaddress,
+            req.body.address_locality,
+            req.body.address_region,
+            req.body.address_postalcode,
+            req.body.address_countryname,
+            req.body.contactpoint_name,
+            req.body.contactpoint_email,
+            req.body.contactpoint_telephone,
+            req.body.contactpoint_faxnumber,
+            req.body.contactpoint_url
+        ]).then(function (data) {
+            res.json({
+                status: 'Ok',
+                description: "Organización actualizada",
+                data: data
+            });
+        }).catch(function (error) {
+            res.json({
+                status: "Error",
+                description: "Ha ocurrido un error",
+                data: error
+            });
         });
-    }).catch(function(error){
-        res.json({
-            status: "Error",
+    }else {
+        res.json ({
+            status : "Error",
             description: "Ha ocurrido un error",
-            data : error
+            data: {}
         });
-    });
+    }
 });
 
 // Tender
@@ -405,106 +414,273 @@ router.put('/new/contractingprocess', function(req, res){
 });
 
 // Items
-router.put('/new/item', function (req, res){
+router.put('/new/:path/item/', function (req, res){
 
-    edca_db.one('insert into $1~ (contractingprocess_id, itemid, description, classification_scheme, classification_id, classification_description, classification_uri,' +
-        ' quantity, unit_name, unit_value_amount, unit_value_currency) values ($2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) returning id', [
-        req.body.table, // tabla donde se inserta el item, opciones -> tenderitems, awarditems, ...
-        req.body.contractingprocess_id, // id del proceso de contratación
-        req.body.itemid, //id del item, puede ser cualquier cosa
-        req.body.description,
-        req.body.classification_scheme,
-        req.body.classification_id,
-        req.body.classification_description,
-        req.body.classification_uri,
-        (isNaN(req.body.quantity)?null:req.body.quantity),
-        req.body.unit_name,
-        (isNaN(req.body.unit_value_amount)?null:req.body.unit_value_amount),
-        req.body.unit_value_currency
-    ]).then(function (data) {
-        res.json({
-            status:  "Ok",
-            description : "Se ha creado un nuevo artículo",
-            data : data
+    // path -> tender, award, contract
+    var table ="";
+    switch ( req.params.path ){
+        case "tender":
+            table = "tenderitem";
+            break;
+        case "award":
+            table = "awarditem";
+            break;
+        case "contract":
+            table = "contractitem";
+            break;
+    }
+
+    if ( table != "" ) {
+
+        edca_db.one('insert into $1~ (contractingprocess_id, itemid, description, classification_scheme, classification_id, classification_description, classification_uri,' +
+            ' quantity, unit_name, unit_value_amount, unit_value_currency) values ($2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) returning id', [
+            table, // tabla donde se inserta el item, opciones -> tenderitems, awarditems, ...
+            req.body.contractingprocess_id, // id del proceso de contratación
+            req.body.itemid, //id del item, puede ser cualquier cosa
+            req.body.description,
+            req.body.classification_scheme,
+            req.body.classification_id,
+            req.body.classification_description,
+            req.body.classification_uri,
+            (isNaN(req.body.quantity) ? null : req.body.quantity),
+            req.body.unit_name,
+            (isNaN(req.body.unit_value_amount) ? null : req.body.unit_value_amount),
+            req.body.unit_value_currency
+        ]).then(function (data) {
+            res.json({
+                status: "Ok",
+                description: "Se ha creado un nuevo artículo",
+                data: data
+            });
+
+        }).catch(function (error) {
+            res.json({
+                status: "Ok",
+                description: "Ha ocurrido un error",
+                data: error
+            });
         });
-
-    }).catch(function (error) {
+    }else {
         res.json({
-            status:  "Ok",
+            status : "",
             description : "Ha ocurrido un error",
-            data : error
-        });
-    });
-
+            data :{}
+        })
+    }
 });
 
 // Amendment changes
-router.put('/new/amendmentchange', function (req, res){
+router.put('/new/:path/amendmentchange/', function (req, res){
+    // path -> tender, award, contract
 
-    edca_db.one('insert into $1~ (contractingprocess_id, property, former_value) values ($2,$3,$4) returning contractingprocess_id, id as amendmentchange_id',[
-        req.body.type, //tabla donde se inserta el cambio
-        req.body.contractingprocess_id, // id del proceso de contratación
-        req.body.property,
-        req.body.former_value
-    ]).then(function (data) {
-        res.send({
-            stautus : "Ok",
-            description : "El cambio ha sido registrado",
-            data : data
-        });
-    }).catch(function (error) {
-        res.send({
-            stautus : "Error",
-            description : "Ha ocurrido un error",
-            data : error
-        });
-    });
+    var table = "";
+    switch ( req.params.path ) {
+        case "tender":
+            table = "tenderamendmentchanges";
+            break;
+        case "award":
+            table = "awardamendmentchanges";
+            break;
+        case "contract":
+            table = "contractamendmentchanges";
+            break
+    }
 
+    if ( table != "") {
+        edca_db.one('insert into $1~ (contractingprocess_id, property, former_value) values ($2,$3,$4) returning contractingprocess_id, id as amendmentchange_id', [
+            table, //tabla donde se inserta el cambio
+            req.body.contractingprocess_id, // id del proceso de contratación
+            req.body.property,
+            req.body.former_value
+        ]).then(function (data) {
+            res.send({
+                stautus: "Ok",
+                description: "El cambio ha sido registrado",
+                data: data
+            });
+        }).catch(function (error) {
+            res.send({
+                stautus: "Error",
+                description: "Ha ocurrido un error",
+                data: error
+            });
+        });
+    }else {
+        res.json({
+            status: "Error",
+            descrition: "",
+            data: {}
+        });
+    }
 });
 
-// Organizations -> tenderers, suppliers
 router.put('/new/organization/:type', function (req, res){
 
-    //limitar opciones -> tenderer, supplier
+    //type -> supplier,tenderer
+    if (req.params.type == "supplier" || req.params.type == "tenderer"){
 
-    edca_db.one("insert into $17~" +
-        " (contractingprocess_id, identifier_scheme, identifier_id, identifier_legalname, identifier_uri, name, address_streetaddress," +
-        " address_locality, address_region, address_postalcode, address_countryname, contactpoint_name, contactpoint_email, contactpoint_telephone," +
-        " contactpoint_faxnumber, contactpoint_url) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) returning id", [
-        req.body.contractingprocess_id, // id del proceso de contratación
-        req.body.identifier_scheme,
-        req.body.identifier_id,
-        req.body.identifier_legalname,
-        req.body.identifier_uri,
-        req.body.name,
-        req.body.address_streetaddress,
-        req.body.address_locality,
-        req.body.address_region,
-        req.body.address_postalcode,
-        req.body.address_countryname,
-        req.body.contactpoint_name,
-        req.body.contactpoint_email,
-        req.body.contactpoint_telephone,
-        req.body.contactpoint_faxnumber,
-        req.body.contactpoint_url,
-        req.params.type // tabla donde se inserta la organización -> tenderer, supplier
-    ]).then(function (data) {
-        res.send({
-            stautus : "Ok",
-            description : "La organización ha sido registrada",
-            data : data
-        });
-    }).catch(function (error) {
-        res.send({
+        edca_db.one("insert into $17~" +
+            " (contractingprocess_id, identifier_scheme, identifier_id, identifier_legalname, identifier_uri, name, address_streetaddress," +
+            " address_locality, address_region, address_postalcode, address_countryname, contactpoint_name, contactpoint_email, contactpoint_telephone," +
+            " contactpoint_faxnumber, contactpoint_url) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) returning id", [
+            req.body.contractingprocess_id, // id del proceso de contratación
+            req.body.identifier_scheme,
+            req.body.identifier_id,
+            req.body.identifier_legalname,
+            req.body.identifier_uri,
+            req.body.name,
+            req.body.address_streetaddress,
+            req.body.address_locality,
+            req.body.address_region,
+            req.body.address_postalcode,
+            req.body.address_countryname,
+            req.body.contactpoint_name,
+            req.body.contactpoint_email,
+            req.body.contactpoint_telephone,
+            req.body.contactpoint_faxnumber,
+            req.body.contactpoint_url,
+            req.params.type // tabla donde se inserta la organización -> tenderer, supplier
+        ]).then(function (data) {
+            res.send({
+                stautus : "Ok",
+                description : "La organización ha sido registrada",
+                data : data
+            });
+        }).catch(function (error) {
+            res.send({
+                stautus : "Error",
+                description : "Ha ocurrido un error",
+                data : error
+            });
+        });}else{
+        res.json({
             stautus : "Error",
             description : "Ha ocurrido un error",
-            data : error
+            data : {
+                message: "Tipo de organización incorrecto, opciones: tenderer, supplier"
+            }
         });
-    });
+    }
 });
 
-// Transactions
-router.put('/new/transaction', function (req, res){
+//milestones -> hitos
+router.put("/new/:path/milestone/", function (req, res) {
+    //stage -> tender, implementation
+
+    var table = "";
+    switch( req.params.path ){
+        case "tender":
+            table = "tendermilestone";
+            break;
+        case "implementation":
+            table = "implementationmilestone";
+            break;
+    }
+
+    if ( table != "" ) {
+        edca_db.one('insert into $1~ (contractingprocess_id, milestoneid, title, description, duedate, date_modified, status) values ($2,$3,$4,$5,$6,$7,$8) returning id', [
+            table, // tabla donde se registra el hito
+            req.body.contractingprocess_id, // id del proceso de contratación
+            req.body.milestoneid, //id del hito, puede ser cualquier cosa
+            req.body.title,
+            req.body.description,
+            (req.body.duedate instanceof Date) ? req.body.duedate : null,
+            (req.body.date_modified instanceof Date) ? req.body.date_modified : null,
+            req.body.status
+        ]).then(function (data) {
+            res.json({
+                status: "Ok",
+                description: "Hito registrado",
+                data: data
+            });
+        }).catch(function (error) {
+            res.json({
+                status: "Error",
+                description: "Ha ocurrido un error",
+                data: error
+            });
+        });
+    }else {
+        res.json({
+            status: "Error",
+            description :"Ha ocurrido un error",
+            data :{}
+        });
+    }
+});
+
+
+// Documents
+router.put('/new/:path/document/', function (req, res){
+    //path -> planning, tender, award, contract, implementation, tender/milestone, implementation/milestone
+
+    var table = "";
+
+    switch( req.params.path ){
+        case "planning":
+            table = "planningdocuments";
+            break;
+        case "tender":
+            table = "tenderdocuments";
+            break;
+        case "award":
+            table = "awarddocuments";
+            break;
+        case "contract":
+            table = "contractdocuments";
+            break;
+        case "implementation":
+            table = "implementationdocuments";
+            break;
+        /*
+        case "tender-milestone":
+        table = "tendermilestonedocuments";
+            break;
+        case "implementation-milestone":
+        table = "implementationmilestonedocuments";
+            break;
+            */
+    }
+
+    if ( table != "") {
+        edca_db.one('insert into $1~ (contractingprocess_id, document_type, documentid, title, description, url, date_published, date_modified, format, language) values ($2,$3,$4,$5,$6,$7,$8,$9,$10,$11) returning id',
+            [
+                table, //tabla donde se inserta el documento, opciones: planningdocuments, tenderdocuments, awarddocuments, contractdocuments ...
+                req.body.contractingprocess_id, // id del proceso de contratación
+                req.body.document_type,
+                req.body.documentid, //id del ducumento, puede ser cualquier cosa
+                req.body.title,
+                req.body.description,
+                req.body.url,
+                (req.body.date_published instanceof Date ) ? req.body.date_published : null,
+                (req.body.date_modified instanceof Date ) ? req.body.date_modified : null,
+                req.body.format,
+                req.body.language // lenguaje del documento en código de dos letras
+            ]).then(function (data) {
+            res.json({
+                status: "Ok",
+                description: "Se ha registrado un nuevo documento",
+                data: data
+            });
+        }).catch(function (error) {
+            res.json({
+                status: "Error",
+                description: "Ha ocurrido un error",
+                data: error
+            });
+        });
+    }else{
+        res.json({
+            status: "Error",
+            description: "Ha ocurrido un error",
+            data: {}
+        });
+    }
+});
+
+
+// Implementation -> Transactions
+router.put('/new/transaction/', function (req, res){
 
     edca_db.one('insert into implementationtransactions (contractingprocess_id, transactionid, source, implementation_date, value_amount, value_currency, ' +
         'providerorganization_scheme,providerorganization_id,providerorganization_legalname,providerorganization_uri,' +
@@ -545,70 +721,17 @@ router.put('/new/transaction', function (req, res){
 
 });
 
-//milestones -> hitos
-router.put("/new/milestone", function (req, res) {
-    edca_db.one('insert into $1~ (contractingprocess_id, milestoneid, title, description, duedate, date_modified, status) values ($2,$3,$4,$5,$6,$7,$8) returning id', [
-        req.body.table, // tabla donde se registra el hito
-        req.body.contractingprocess_id, // id del proceso de contratación
-        req.body.milestoneid, //id del hito, puede ser cualquier cosa
-        req.body.title,
-        req.body.description,
-        (req.body.duedate instanceof Date)?req.body.duedate:null,
-        (req.body.date_modified instanceof Date)?req.body.date_modified:null,
-        req.body.status
-    ]).then(function (data) {
-        res.json({
-            status :  "Ok",
-            description: "Hito registrado",
-            data : data
-        });
-    }).catch(function(error){
-        res.json({
-            status :  "Error",
-            description:"Ha ocurrido un error",
-            data : error
-        });
-    });
-
-});
-
-
-// Documents
-router.put('/new/document', function (req, res){
-    edca_db.one('insert into $1~ (contractingprocess_id, document_type, documentid, title, description, url, date_published, date_modified, format, language) values ($2,$3,$4,$5,$6,$7,$8,$9,$10,$11) returning id',
-        [
-            req.body.table, //tabla donde se inserta el documento, opciones: planningdocuments, tenderdocuments, awarddocuments, contractdocuments ...
-            req.body.contractingprocess_id, // id del proceso de contratación
-            req.body.document_type,
-            req.body.documentid, //id del ducumento, puede ser cualquier cosa
-            req.body.title,
-            req.body.description,
-            req.body.url,
-            (req.body.date_published instanceof Date )?req.body.date_published:null,
-            (req.body.date_modified instanceof Date )?req.body.date_modified:null,
-            req.body.format,
-            req.body.language // lenguaje del documento en código de dos letras
-        ]).then(function (data) {
-        res.json({
-            status:"Ok",
-            description: "Se ha registrado un nuevo documento",
-            data: data
-        });
-    }).catch(function(error){
-        res.json({
-            status :  "Error",
-            description:"Ha ocurrido un error",
-            data : error
-        });
-    });
-});
 
 /* * * * * *
  * Delete  *
  * * * * * */
-router.delete('/delete/:object/:object_id',function (req, res ) {
+router.delete('/delete/:path/:object_id',function (req, res ) {
 
-    edca_db.one('delete from $1~ cascade where id = $2 returning id', [req.params.object, req.params.object_id]).then(function (data) {
+    var table = "";
+
+    //switch( req.params.path ){}
+
+    edca_db.one('delete from $1~ cascade where id = $2 returning id', [table , req.params.object_id]).then(function (data) {
         res.json({
             status: "Ok",
             description: "Objeto eliminado",
