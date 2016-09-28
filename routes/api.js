@@ -1,4 +1,5 @@
 var express = require('express');
+var app = express();
 var router = express.Router();
 var pgp = require ('pg-promise')();
 
@@ -21,11 +22,100 @@ if ( typeof process.env.EDCA_DB != "undefined" ){
 }
 
 
+
+
+/* * *
+ * Authenticate
+ * */
+
+var mongoose = require('mongoose');
+var jwt = require('jsonwebtoken');
+var config = require("../config");
+var User = require('../models/user');
+
+mongoose.connect(config.database);
+
+app.set('superSecret', config.secret);
+
+router.post('/authenticate', function( req, res ){
+
+    // find the user
+    User.findOne({
+        username: req.body.username
+    }, function(err, user) {
+
+        if (err) throw err;
+
+        if (!user) {
+            res.json({ success: false, message: 'Fallo de autentificación: No se encontró el usuario.' });
+        } else if (user) {
+
+            // check if password matches
+            // decodificar ...
+            if (user.password != req.body.password) {
+                res.json({ success: false, message: 'Fallo de autentificación: Contraseña erronea.' });
+            } else {
+
+                // if user is found and password is right
+                // create a token
+                var token = jwt.sign(user, app.get('superSecret'), {
+                    expiresIn : 60*60*24// expires in 24 hours
+                });
+
+                // return the information including token as JSON
+                res.json({
+                    success: true,
+                    message: 'Token generado exitosamente.',
+                    token: token
+                });
+            }
+
+        }
+
+    });
+
+
+});
+
+
+function verifyToken(req, res, next) {
+
+    // check header or url parameters or post parameters for token
+    var token = req.body.token || req.query.token || req.headers['x-access-token'];
+
+    // decode token
+    if (token) {
+
+        // verifies secret and checks exp
+        jwt.verify(token, app.get('superSecret'), function (err, decoded) {
+            if (err) {
+                return res.json({success: false, message: 'Failed to authenticate token.'});
+            } else {
+                // if everything is good, save to request for use in other routes
+                req.decoded = decoded;
+                next();
+            }
+        });
+
+    } else {
+
+        // if there is no token
+        // return an error
+        return res.status(403).send({
+            success: false,
+            message: 'No token provided.'
+        });
+
+    }
+}
+
+
+
 /* * * * * * * * * * * *
  * Getting information *
  * * * * * * * * * * * */
 
-router.get('/get/:entity/:limit/:offset', function(req, res){
+router.get('/get/:entity/:limit/:offset', verifyToken, function(req, res){
 
     var entity = req.params.entity;
     var limit = +req.params.limit;
@@ -52,10 +142,13 @@ router.get('/get/:entity/:limit/:offset', function(req, res){
 
 });
 
-router.get('/getbyid/:entity/:id',function(req, res){
+router.get('/getbyid/:entity/:id', verifyToken ,function(req, res){
 
     var entity = req.params.entity;
     var id = req.params.id;
+
+
+    //Especificar opciones ...
 
     edca_db.oneOrNone("select * from $1~ where id = $2", [
         entity,
@@ -81,7 +174,7 @@ router.get('/getbyid/:entity/:id',function(req, res){
  * Updates *
  * * * * * */
 
-router.post("/update/contractingprocess/:id", function (req, res){
+router.post("/update/contractingprocess/:id", verifyToken, function (req, res){
 
     // contractingprocess_id -> id (consecutivo) del proceso de contratación con el cual se registró en el sistema EDCA
     // stage -> etapa en que se encuentra la contratación: 0 -> planning, 1 -> licitación, 2 -> adjudicación, 3 -> contratación, 4 -> implementación
@@ -116,7 +209,7 @@ router.post("/update/contractingprocess/:id", function (req, res){
 });
 
 //Planning
-router.post('/update/planning/:id', function (req, res){
+router.post('/update/planning/:id',verifyToken, function (req, res){
 
     edca_db.tx(function (t) {
 
@@ -168,7 +261,7 @@ router.post('/update/planning/:id', function (req, res){
 });
 
 // organizations -> buyer, tenderers, suppliers
-router.post('/update/organization/:type/:id', function (req, res){
+router.post('/update/organization/:type/:id',verifyToken, function (req, res){
 
     if ( req.params.type == "buyer" || req.params.type == "tenderer" || req.params.type == "supplier") {
 
@@ -215,7 +308,7 @@ router.post('/update/organization/:type/:id', function (req, res){
 });
 
 // Tender
-router.post('/update/tender/:id', function (req, res){
+router.post('/update/tender/:id',verifyToken, function (req, res){
 
     edca_db.one("update tender set tenderid =$2, title= $3, description=$4, status=$5, minvalue_amount=$6, minvalue_currency=$7, value_amount=$8, value_currency=$9, procurementmethod=$10," +
         "procurementmethod_rationale=$11, awardcriteria=$12, awardcriteria_details=$13, submissionmethod=$14, submissionmethod_details=$15," +
@@ -265,7 +358,7 @@ router.post('/update/tender/:id', function (req, res){
 });
 
 // Award
-router.post('/update/award/:id', function (req, res){
+router.post('/update/award/:id',verifyToken, function (req, res){
     edca_db.one("update award set awardid=$2, title= $3, description=$4,status=$5,award_date=$6,value_amount=$7,value_currency=$8,contractperiod_startdate=$9," +
         "contractperiod_enddate=$10,amendment_date=$11,amendment_rationale=$12 " +
         " where id = $1 returning id",[
@@ -298,7 +391,7 @@ router.post('/update/award/:id', function (req, res){
 });
 
 // Contract
-router.post('/update/contract/:id', function (req, res){
+router.post('/update/contract/:id',verifyToken, function (req, res){
     edca_db.one("update contract set contractid=$2, awardid=$3, title=$4, description=$5, status=$6, period_startdate=$7, period_enddate=$8, value_amount=$9, value_currency=$10," +
         " datesigned=$11, amendment_date=$12, amendment_rationale=$13 " +
         " where id = $1 returning id", [
@@ -331,7 +424,7 @@ router.post('/update/contract/:id', function (req, res){
 });
 
 // Publisher
-router.post('/update/publisher/:id', function (req, res){
+router.post('/update/publisher/:id',verifyToken, function (req, res){
     edca_db.one("update publisher set name=$2, scheme=$3, uid=$4, uri=$5 where id = $1 returning ContractingProcess_id, id as publisher_id, name, scheme, uid, uri", [
         req.params.id, //id del proceso del publisher
         req.body.name,
@@ -358,7 +451,7 @@ router.post('/update/publisher/:id', function (req, res){
  * * * * * * * */
 
 // new contracting process
-router.put('/new/contractingprocess', function(req, res){
+router.put('/new/contractingprocess',verifyToken, function(req, res){
     var ocid = req.body.ocid ;
     var stage = req.body.stage;
 
@@ -414,7 +507,7 @@ router.put('/new/contractingprocess', function(req, res){
 });
 
 // Items
-router.put('/new/:path/item/', function (req, res){
+router.put('/new/:path/item/',verifyToken, function (req, res){
 
     // path -> tender, award, contract
     var table ="";
@@ -470,7 +563,7 @@ router.put('/new/:path/item/', function (req, res){
 });
 
 // Amendment changes
-router.put('/new/:path/amendmentchange/', function (req, res){
+router.put('/new/:path/amendmentchange/',verifyToken, function (req, res){
     // path -> tender, award, contract
 
     var table = "";
@@ -514,7 +607,7 @@ router.put('/new/:path/amendmentchange/', function (req, res){
     }
 });
 
-router.put('/new/organization/:type', function (req, res){
+router.put('/new/organization/:type',verifyToken, function (req, res){
 
     //type -> supplier,tenderer
     if (req.params.type == "supplier" || req.params.type == "tenderer"){
@@ -564,7 +657,7 @@ router.put('/new/organization/:type', function (req, res){
 });
 
 //milestones -> hitos
-router.put("/new/:path/milestone/", function (req, res) {
+router.put("/new/:path/milestone/",verifyToken, function (req, res) {
     //stage -> tender, implementation
 
     var table = "";
@@ -611,7 +704,7 @@ router.put("/new/:path/milestone/", function (req, res) {
 
 
 // Documents
-router.put('/new/:path/document/', function (req, res){
+router.put('/new/:path/document/',verifyToken, function (req, res){
     //path -> planning, tender, award, contract, implementation, tender/milestone, implementation/milestone
 
     var table = "";
@@ -680,7 +773,7 @@ router.put('/new/:path/document/', function (req, res){
 
 
 // Implementation -> Transactions
-router.put('/new/transaction/', function (req, res){
+router.put('/new/transaction/',verifyToken, function (req, res){
 
     edca_db.one('insert into implementationtransactions (contractingprocess_id, transactionid, source, implementation_date, value_amount, value_currency, ' +
         'providerorganization_scheme,providerorganization_id,providerorganization_legalname,providerorganization_uri,' +
@@ -725,7 +818,7 @@ router.put('/new/transaction/', function (req, res){
 /* * * * * *
  * Delete  *
  * * * * * */
-router.delete('/delete/:path/:object_id',function (req, res ) {
+router.delete('/delete/:path/:object_id',verifyToken,function (req, res ) {
 
     var table = "";
 
