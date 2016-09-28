@@ -56,7 +56,6 @@ router.post('/authenticate', function( req, res ){
         } else if (user) {
 
             // check if password matches
-            // decodificar ...
             if (isValidPassword(user, req.body.password)) {
                 // if user is found and password is right
                 // create a token
@@ -116,43 +115,125 @@ function verifyToken(req, res, next) {
  * Getting information *
  * * * * * * * * * * * */
 
-router.get('/get/:entity/:limit/:offset', verifyToken, function(req, res){
 
-    var entity = req.params.entity;
-    var limit = +req.params.limit;
-    var offset = +req.params.offset;
+function getTableName( path ) {
+    var table = "";
+    switch( path ){
+        case "contractingprocess":
+            table = "contractingprocess";
+            break;
+        //Documents
+        case "planning-document":
+            table = "planningdocuments";
+            break;
+        case "tender-document":
+            table = "tenderdocuments";
+            break;
+        case "award-document":
+            table = "awarddocuments";
+            break;
+        case "contract-document":
+            table = "contractdocuments";
+            break;
+        case "implementation-document":
+            table = "implementationdocuments";
+            break;
+        /*case "tender-milestone-document":
+            table = "tendermilestonedocuments";
+            break;
+        case "implementation-milestone-document":
+            table = "implementationmilestonedocuments";
+            break;*/
+        //Amendment changes
+        case "tender-amendment-change":
+            table = "tenderamendmentchanges";
+            break;
+        case "award-amendment-change":
+            table = "awardamendmentchanges";
+            break;
+        case "contract-amendment-change":
+            table = "contractamendmentchanges";
+            break;
+        //Items
+        case "tender-item":
+            table = "tenderitem";
+            break;
+        case "award-item":
+            table = "awarditem";
+            break;
+        case "contract-item":
+            table = "contractitem";
+            break;
+        //Milestones
+        case "tender-milestone":
+            table = "tendermilestone";
+            break;
+        case "implementation-milestone":
+            table = "implementationmilestone";
+            break;
+        //Transactions
+        case "transaction":
+            table = "implementationtransaction";
+            break;
+        //Tenderers
+        case "tenderer":
+            table = "tenderer";
+            break;
+        //Suppliers
+        case "supplier":
+            table = "supplier";
+            break;
+    }
 
-    edca_db.manyOrNone("select * from $1~ order by id limit $2 offset $3", [
-        entity,
-        limit,
-        offset
-    ]).then(function(data){
-        res.json({
-            status: "Ok",
-            description: "Listado: " + entity,
-            data: data
-        })
-    }).catch(function (error) {
+    return table;
+}
 
-        res.json({
-            status: "Error",
-            description : "Ha ocurrido un error",
-            data : error
-        })
-    });
+router.get('/get/:path/:limit/:offset', verifyToken, function(req, res){
+
+    var table = getTableName( req.params.path );
+    var limit = Math.abs(req.params.limit);
+    var offset = Math.abs(req.params.offset);
+
+    if ( table != "" && !isNaN(limit) && !isNaN(offset)) {
+        edca_db.manyOrNone("select * from $1~ order by id limit $2 offset $3", [
+            table,
+            limit,
+            offset
+        ]).then(function (data) {
+            res.json({
+                status: "Ok",
+                description: "Objetos: " + table,
+                data: data
+            })
+        }).catch(function (error) {
+
+            res.json({
+                status: "Error",
+                description: "Ha ocurrido un error",
+                data: error
+            })
+        });
+    }else {
+         res.json ({
+             status: "Error",
+             description : "Ha ocurrido un error",
+             data : {
+                 message : "Objeto no válido"
+             }
+         })
+    }
 
 });
 
-router.get('/getbyid/:entity/:id', verifyToken ,function(req, res){
+router.get('/getbyid/:path/:id', verifyToken ,function(req, res){
 
-    var entity = req.params.entity;
+    var table = getTableName( req.params.path );
     var id = req.params.id;
-
 
     //Especificar opciones ...
 
     edca_db.oneOrNone("select * from $1~ where id = $2", [
-        entity,
+        table,
         id
     ]).then(function (data) {
 
@@ -174,7 +255,7 @@ router.get('/getbyid/:entity/:id', verifyToken ,function(req, res){
 /* * * * * *
  * Updates *
  * * * * * */
-
+//Contracting process
 router.post("/update/contractingprocess/:id", verifyToken, function (req, res){
 
     // contractingprocess_id -> id (consecutivo) del proceso de contratación con el cual se registró en el sistema EDCA
@@ -821,74 +902,7 @@ router.put('/new/transaction/',verifyToken, function (req, res){
  * * * * * */
 router.delete('/delete/:path/:object_id',verifyToken,function (req, res ) {
 
-    var table = "";
-
-    switch( req.params.path ){
-        case "contractingprocess":
-            table = "contractingprocess";
-            break;
-        //Documents
-        case "planning-document":
-            table = "planningdocuments";
-            break;
-        case "tender-document":
-            table = "tenderdocuments";
-            break;
-        case "award-document":
-            table = "awarddocuments";
-            break;
-        case "contract-document":
-            table = "contractdocuments";
-            break;
-        case "implementation-document":
-            table = "implementationdocuments";
-            break;
-        /*case "tender-milestone-document":
-            table = "tendermilestonedocuments";
-            break;
-        case "implementation-milestone-document":
-            table = "implementationmilestonedocuments";
-            break;*/
-        //Amendment changes
-        case "tender-amendment-change":
-            table = "tenderamendmentchanges";
-            break;
-        case "award-amendment-change":
-            table = "awardamendmentchanges";
-            break;
-        case "contract-amendment-change":
-            table = "contractamendmentchanges";
-            break;
-        //Items
-        case "tender-item":
-            table = "tenderitem";
-            break;
-        case "award-item":
-            table = "awarditem";
-            break;
-        case "contract-item":
-            table = "contractitem";
-            break;
-        //Milestones
-        case "tender-milestone":
-            table = "tendermilestone";
-            break;
-        case "implementation-milestone":
-            table = "implementationmilestone";
-            break;
-        //Transactions
-        case "transaction":
-            table = "implementationtransaction";
-            break;
-        //Tenderers
-        case "tenderer":
-            table = "tenderer";
-            break;
-        //Suppliers
-        case "supplier":
-            table = "supplier";
-            break;
-    }
+    var table = getTableName( req.params.path );
 
     if (table != "") {
         edca_db.one('delete from $1~ cascade where id = $2 returning id', [
@@ -917,6 +931,5 @@ router.delete('/delete/:path/:object_id',verifyToken,function (req, res ) {
         });
     }
 });
-
 
 module.exports = router;
