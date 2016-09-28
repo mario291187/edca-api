@@ -3,6 +3,8 @@ var app = express();
 var router = express.Router();
 var pgp = require ('pg-promise')();
 
+var bCrypt = require('bcrypt-nodejs');
+
 /* index */
 router.get('/', function(req, res, next) {
     res.json({
@@ -34,8 +36,11 @@ var config = require("../config");
 var User = require('../models/user');
 
 mongoose.connect(config.database);
-
 app.set('superSecret', config.secret);
+
+var isValidPassword = function(user, password){
+    return bCrypt.compareSync(password, user.password);
+};
 
 router.post('/authenticate', function( req, res ){
 
@@ -52,10 +57,7 @@ router.post('/authenticate', function( req, res ){
 
             // check if password matches
             // decodificar ...
-            if (user.password != req.body.password) {
-                res.json({ success: false, message: 'Fallo de autentificación: Contraseña erronea.' });
-            } else {
-
+            if (isValidPassword(user, req.body.password)) {
                 // if user is found and password is right
                 // create a token
                 var token = jwt.sign(user, app.get('superSecret'), {
@@ -68,15 +70,14 @@ router.post('/authenticate', function( req, res ){
                     message: 'Token generado exitosamente.',
                     token: token
                 });
+            } else {
+                res.json({ success: false, message: 'Fallo de autentificación: Contraseña erronea.' });
             }
-
         }
-
     });
 
 
 });
-
 
 function verifyToken(req, res, next) {
 
