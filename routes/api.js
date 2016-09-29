@@ -333,8 +333,8 @@ router.post('/update/planning/:id',verifyToken, function (req, res){
             return this.batch([
                 //planning
                 t.one("update planning set rationale = $1 where id = $2 returning id, contractingprocess_id", [
-                    id, //id de la planeación
-                    req.body.rationale
+                    req.body.rationale,
+                    id //id de la planeación
                 ])
             ]).then(function (data) {
 
@@ -625,57 +625,69 @@ router.post('/update/publisher/:id',verifyToken, function (req, res){
 // new contracting process
 router.put('/new/contractingprocess',verifyToken, function(req, res){
     var ocid = req.body.ocid ;
-    var stage = req.body.stage;
+    var stage = Math.abs(req.body.stage);
 
-    edca_db.tx(function (t) {
 
-        return t.one("insert into ContractingProcess (fecha_creacion, hora_creacion, ocid, stage ) values " +
-            "(current_date, current_time,  $1, $2)" +
-            " returning id",[
-            ocid,
-            stage
-        ]).then(function (process) {
+    if ( ocid !="" && !isNaN(stage) && stage <= 4) {
 
-            return t.batch([
-                process = { id : process.id},
-                t.one("insert into Planning (ContractingProcess_id) values ($1) returning id", [process.id]),
-                t.one ("insert into Tender (ContractingProcess_id,status) values ($1, $2) returning id as tender_id", [process.id, 'none']),
-                t.one ("insert into Contract (ContractingProcess_id, status) values ($1, $2) returning id", [process.id, 'none'])
-            ]);
+        edca_db.tx(function (t) {
 
-        }).then(function (info) {
+            return t.one("insert into ContractingProcess (fecha_creacion, hora_creacion, ocid, stage ) values " +
+                "(current_date, current_time,  $1, $2)" +
+                " returning id", [
+                ocid,
+                stage
+            ]).then(function (process) {
 
-            var process= {process_id : info[0].id};
-            var planning = {planning_id : info[1].id};
+                return t.batch([
+                    process = {id: process.id},
+                    t.one("insert into Planning (ContractingProcess_id) values ($1) returning id", [process.id]),
+                    t.one("insert into Tender (ContractingProcess_id,status) values ($1, $2) returning id as tender_id", [process.id, 'none']),
+                    t.one("insert into Contract (ContractingProcess_id, status) values ($1, $2) returning id", [process.id, 'none'])
+                ]);
 
-            return t.batch([
-                process, planning,
-                t.one("insert into Budget (ContractingProcess_id, Planning_id) values ($1, $2 ) returning id as budget_id", [info[0].id, info[1].id]),
-                t.one("insert into Buyer (ContractingProcess_id) values ($1) returning id as buyer_id",[info[0].id]),
-                t.one("insert into ProcuringEntity (contractingprocess_id, tender_id) values ($1, $2) returning id as procuringentity_id",[info[0].id, info[2].id]),
-                t.one("insert into Award (ContractingProcess_id,status) values ($1, $2) returning id as award_id", [info[0].id, 'none']),
-                t.one("insert into Implementation (ContractingProcess_id, Contract_id ) values ($1, $2) returning id as implementation_id", [info[0].id, info[3].id]),
-                t.one("insert into Publisher (ContractingProcess_id) values ($1) returning id as publisher_id", info[0].id)
-            ]);
+            }).then(function (info) {
 
+                var process = {process_id: info[0].id};
+                var planning = {planning_id: info[1].id};
+
+                return t.batch([
+                    process, planning,
+                    t.one("insert into Budget (ContractingProcess_id, Planning_id) values ($1, $2 ) returning id as budget_id", [info[0].id, info[1].id]),
+                    t.one("insert into Buyer (ContractingProcess_id) values ($1) returning id as buyer_id", [info[0].id]),
+                    t.one("insert into ProcuringEntity (contractingprocess_id, tender_id) values ($1, $2) returning id as procuringentity_id", [info[0].id, info[2].id]),
+                    t.one("insert into Award (ContractingProcess_id,status) values ($1, $2) returning id as award_id", [info[0].id, 'none']),
+                    t.one("insert into Implementation (ContractingProcess_id, Contract_id ) values ($1, $2) returning id as implementation_id", [info[0].id, info[3].id]),
+                    t.one("insert into Publisher (ContractingProcess_id) values ($1) returning id as publisher_id", info[0].id)
+                ]);
+
+            });
+        }).then(function (data) {
+            console.log(data);
+            res.json({
+                status: "Ok",
+                description: "Se ha creado un nuevo registro de proceso de contratación",
+                data: data
+            });
+
+        }).catch(function (error) {
+            console.log(error);
+
+            res.json({
+                status: "Error",
+                description: "Ha ocurrido un error al crear el nuevo proceso de contratación",
+                data: error
+            });
         });
-    }).then(function (data) {
-        console.log(data);
-        res.json ({
-            status : "Ok",
-            description : "Se ha creado un nuevo registro de proceso de contratación",
-            data: data
+    } else {
+        res.status(400).json({
+            status : "Error",
+            description : "Ha ocurrido un error",
+            data : {
+                message : "Parámetros incorrectos."
+            }
         });
-
-    }).catch(function (error) {
-        console.log(error);
-
-        res.json({
-            status: "Error",
-            description: "Ha ocurrido un error al crear el nuevo proceso de contratación",
-            data: error
-        });
-    });
+    }
 });
 
 // Items
@@ -1000,7 +1012,7 @@ router.put('/new/transaction/',verifyToken, function (req, res){
 router.delete('/delete/:path/:id',verifyToken,function (req, res ) {
 
     var table = getTableName( req.params.path, 'delete' );
-    var id = req.params.id;
+    var id = Math.abs(req.params.id);
 
     if (table != "" && !isNaN( id )) {
         edca_db.one('delete from $1~ cascade where id = $2 returning id', [
