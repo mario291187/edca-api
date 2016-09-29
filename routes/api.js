@@ -116,7 +116,7 @@ function verifyToken(req, res, next) {
  * * * * * * * * * * * */
 
 
-function getTableName( path ) {
+function getTableName( path, opType ) {
     var table = "";
     switch( path ){
         case "contractingprocess":
@@ -185,12 +185,28 @@ function getTableName( path ) {
             break;
     }
 
+
+    if ( opType == "read" ){
+        switch ( path ) {
+            case "planning":
+                break;
+            case "budget":
+                break;
+            case "tender":
+                break;
+            case "award":
+                break;
+            case "contract":
+                break;
+        }
+    }
+
     return table;
 }
 
 router.get('/get/:path/:limit/:offset', verifyToken, function(req, res){
 
-    var table = getTableName( req.params.path );
+    var table = getTableName( req.params.path, 'read' );
     var limit = Math.abs(req.params.limit);
     var offset = Math.abs(req.params.offset);
 
@@ -227,7 +243,7 @@ router.get('/get/:path/:limit/:offset', verifyToken, function(req, res){
 
 router.get('/getbyid/:path/:id', verifyToken ,function(req, res){
 
-    var table = getTableName( req.params.path );
+    var table = getTableName( req.params.path, 'read' );
     var id = req.params.id;
 
     //Especificar opciones ...
@@ -902,7 +918,7 @@ router.put('/new/transaction/',verifyToken, function (req, res){
  * * * * * */
 router.delete('/delete/:path/:object_id',verifyToken,function (req, res ) {
 
-    var table = getTableName( req.params.path );
+    var table = getTableName( req.params.path, 'delete' );
 
     if (table != "") {
         edca_db.one('delete from $1~ cascade where id = $2 returning id', [
