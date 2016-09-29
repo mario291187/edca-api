@@ -642,8 +642,8 @@ router.put('/new/contractingprocess',verifyToken, function(req, res){
                 return t.batch([
                     process = {id: process.id},
                     t.one("insert into Planning (ContractingProcess_id) values ($1) returning id", [process.id]),
-                    t.one("insert into Tender (ContractingProcess_id,status) values ($1, $2) returning id as tender_id", [process.id, 'none']),
-                    t.one("insert into Contract (ContractingProcess_id, status) values ($1, $2) returning id", [process.id, 'none'])
+                    t.one("insert into Tender (ContractingProcess_id) values ($1) returning id as tender_id", [process.id]),
+                    t.one("insert into Contract (ContractingProcess_id) values ($1) returning id", [process.id])
                 ]);
 
             }).then(function (info) {
@@ -656,7 +656,7 @@ router.put('/new/contractingprocess',verifyToken, function(req, res){
                     t.one("insert into Budget (ContractingProcess_id, Planning_id) values ($1, $2 ) returning id as budget_id", [info[0].id, info[1].id]),
                     t.one("insert into Buyer (ContractingProcess_id) values ($1) returning id as buyer_id", [info[0].id]),
                     t.one("insert into ProcuringEntity (contractingprocess_id, tender_id) values ($1, $2) returning id as procuringentity_id", [info[0].id, info[2].id]),
-                    t.one("insert into Award (ContractingProcess_id,status) values ($1, $2) returning id as award_id", [info[0].id, 'none']),
+                    t.one("insert into Award (ContractingProcess_id) values ($1) returning id as award_id", [info[0].id]),
                     t.one("insert into Implementation (ContractingProcess_id, Contract_id ) values ($1, $2) returning id as implementation_id", [info[0].id, info[3].id]),
                     t.one("insert into Publisher (ContractingProcess_id) values ($1) returning id as publisher_id", info[0].id)
                 ]);
