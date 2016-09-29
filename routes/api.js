@@ -89,7 +89,10 @@ function verifyToken(req, res, next) {
         // verifies secret and checks exp
         jwt.verify(token, app.get('superSecret'), function (err, decoded) {
             if (err) {
-                return res.json({success: false, message: 'Failed to authenticate token.'});
+                return res.status(403).json({
+                    success: false,
+                    message: 'Failed to authenticate token.'
+                });
             } else {
                 // if everything is good, save to request for use in other routes
                 req.decoded = decoded;
@@ -101,7 +104,7 @@ function verifyToken(req, res, next) {
 
         // if there is no token
         // return an error
-        return res.status(403).send({
+        return res.status(403).json({
             success: false,
             message: 'No token provided.'
         });
@@ -230,13 +233,13 @@ router.get('/get/:path/:limit/:offset', verifyToken, function(req, res){
             })
         });
     }else {
-         res.json ({
-             status: "Error",
-             description : "Ha ocurrido un error",
-             data : {
-                 message : "Objeto no válido"
-             }
-         })
+        res.status(400).json ({
+            status: "Error",
+            description : "Ha ocurrido un error",
+            data : {
+                message : "Objeto no válido"
+            }
+        })
     }
 
 });
@@ -244,27 +247,35 @@ router.get('/get/:path/:limit/:offset', verifyToken, function(req, res){
 router.get('/getbyid/:path/:id', verifyToken ,function(req, res){
 
     var table = getTableName( req.params.path, 'read' );
-    var id = req.params.id;
+    var id = Math.abs( req.params.id );
 
-    //Especificar opciones ...
+    if ( table != "" && !isNaN( id )){
 
-    edca_db.oneOrNone("select * from $1~ where id = $2", [
-        table,
-        id
-    ]).then(function (data) {
+        edca_db.oneOrNone("select * from $1~ where id = $2", [
+            table,
+            id
+        ]).then(function (data) {
 
-        res.json({
-            status: "Ok",
-            description:"Detalle",
-            data : data
-        })
-    }).catch(function(error){
-        res.json({
-            status: "Error",
-            description:"Ha ocurrido un error",
-            data: error
-        })
-    });
+            res.json({
+                status: "Ok",
+                description:"Detalle",
+                data : data
+            })
+        }).catch(function(error){
+            res.json({
+                status: "Error",
+                description:"Ha ocurrido un error",
+                data: error
+            })
+        });
+    }else {
+        res.status(400).json({
+            status : "Error",
+            description: "Ha ocurrido un error",
+            data : "Parámetros incorrectos."
+        });
+
+    }
 });
 
 
@@ -278,12 +289,15 @@ router.post("/update/contractingprocess/:id", verifyToken, function (req, res){
     // stage -> etapa en que se encuentra la contratación: 0 -> planning, 1 -> licitación, 2 -> adjudicación, 3 -> contratación, 4 -> implementación
     // Open Contracting ID (ocid)->  Es un ID global asignado al proceso de contratación, puede ser cualquier cosa
 
-    if ( !isNaN( +req.params.id ) || isNaN( +req.body.stage) || +req.body.stage < 0 || +req.body.stage > 4){
+    var stage = Math.abs(req.params.stage);
+    var id = Math.abs(req.params.id);
+
+    if ( !isNaN( id ) && !isNaN( stage ) && stage < 4){
 
         edca_db.one("update contractingprocess set ocid = $1, stage = $2 where id = $3 returning id, ocid, stage", [
             req.body.ocid,
-            +req.body.stage,
-            +req.params.id // id del proceso de contratación
+            stage,
+            id // id del proceso de contratación
         ]).then(function (data) {
             res.json({
                 status: "Ok",
@@ -298,10 +312,12 @@ router.post("/update/contractingprocess/:id", verifyToken, function (req, res){
             });
         });
     }else{
-        res.json({
+        res.status(400).json({
             status: "Error",
-            description: "Mensaje incorrecto",
-            data : {}
+            description: "Ha ocurrido un error.",
+            data : {
+                message: "Parámetros incorrectos."
+            }
         })
     }
 });
@@ -309,65 +325,77 @@ router.post("/update/contractingprocess/:id", verifyToken, function (req, res){
 //Planning
 router.post('/update/planning/:id',verifyToken, function (req, res){
 
-    edca_db.tx(function (t) {
+    var id = Math.abs( req.params.id );
 
-        return this.batch([
-            //planning
-            t.one("update planning set rationale = $1 where ContractingProcess_id = $2 returning id, contractingprocess_id", [
-                req.body.rationale,
-                req.body.contractingprocess_id //id del proceso de contratación
-            ])
-        ]).then(function (data) {
+    if (!isNaN( id )) {
+        edca_db.tx(function (t) {
 
-            var planning = {
-                id: data.id,
-                contractingprocess_id : data.contractingprocess_id
-            };
-
-            //budget
-            return t.batch ([
-                planning,
-                t.one("update budget set budget_source = $2, budget_budgetid =$3, budget_description= $4, budget_amount=$5, budget_currency=$6, budget_project=$7, budget_projectid=$8, budget_uri=$9" +
-                    " where ContractingProcess_id=$1 returning id", [
-                    data.contractingprocess_id, // id del proceso de contratación
-                    req.body.budget_source,
-                    req.body.budget_budgetid,
-                    req.body.budget_description,
-                    ( isNaN(req.body.budget_amount) ?null:req.body.budget_amount),
-                    req.body.budget_currency,
-                    req.body.budget_project,
-                    req.body.budget_projectid,
-                    req.body.budget_uri
+            return this.batch([
+                //planning
+                t.one("update planning set rationale = $1 where id = $2 returning id, contractingprocess_id", [
+                    id, //id de la planeación
+                    req.body.rationale
                 ])
-            ]);
-        });
+            ]).then(function (data) {
 
-    }).then(function (data) {
-        res.json({
-            status: "Ok",
-            description: "Los datos han sido actualizados",
-            data: data
+                var planning = {
+                    id: data.id,
+                    contractingprocess_id: data.contractingprocess_id
+                };
+
+                //budget
+                return t.batch([
+                    planning,
+                    t.one("update budget set budget_source = $2, budget_budgetid =$3, budget_description= $4, budget_amount=$5, budget_currency=$6, budget_project=$7, budget_projectid=$8, budget_uri=$9" +
+                        " where ContractingProcess_id=$1 returning id", [
+                        data.contractingprocess_id, // id del proceso de contratación
+                        req.body.budget_source,
+                        req.body.budget_budgetid,
+                        req.body.budget_description,
+                        ( isNaN(req.body.budget_amount) ? null : req.body.budget_amount),
+                        req.body.budget_currency,
+                        req.body.budget_project,
+                        req.body.budget_projectid,
+                        req.body.budget_uri
+                    ])
+                ]);
+            });
+
+        }).then(function (data) {
+            res.json({
+                status: "Ok",
+                description: "Los datos han sido actualizados",
+                data: data
+            });
+        }).catch(function (error) {
+            res.json({
+                status: "Error",
+                description: "Ha ocurrido un error",
+                data: error
+            });
         });
-    }).catch(function (error) {
-        res.json({
-            status:  "Error",
+    } else{
+        res.status(400).json({
+            status : "Error",
             description: "Ha ocurrido un error",
-            data: error
-        });
-    });
-
+            data : {
+                message : "Parámetros incorrectos."
+            }
+        })
+    }
 });
 
 // organizations -> buyer, tenderers, suppliers
 router.post('/update/organization/:type/:id',verifyToken, function (req, res){
 
-    if ( req.params.type == "buyer" || req.params.type == "tenderer" || req.params.type == "supplier") {
+    var id = Math.abs( req.params.id );
+    if ( (req.params.type == "buyer" || req.params.type == "tenderer" || req.params.type == "supplier") && !isNaN(id) ) {
 
         edca_db.one("update $1~ set identifier_scheme= $3, identifier_id =$4, identifier_legalname=$5, identifier_uri=$6, name = $7, address_streetaddress=$8," +
             " address_locality=$9, address_region =$10, address_postalcode=$11, address_countryname=$12, contactpoint_name=$13, contactpoint_email=$14, contactpoint_telephone=$15," +
             " contactpoint_faxnumber=$16, contactpoint_url=$17 where id = $2 returning id", [
             req.params.type, //  tabla donde se inserta el registro, opciones -> buyer, tendererer, supplier
-            req.params.id, // id de la organización
+            id, // id de la organización
             req.body.identifier_scheme,
             req.body.identifier_id,
             req.body.identifier_legalname,
@@ -397,7 +425,7 @@ router.post('/update/organization/:type/:id',verifyToken, function (req, res){
             });
         });
     }else {
-        res.json ({
+        res.status(400).json ({
             status : "Error",
             description: "Ha ocurrido un error",
             data: {}
@@ -407,141 +435,187 @@ router.post('/update/organization/:type/:id',verifyToken, function (req, res){
 
 // Tender
 router.post('/update/tender/:id',verifyToken, function (req, res){
+    var id = Math.abs(req.params.id);
 
-    edca_db.one("update tender set tenderid =$2, title= $3, description=$4, status=$5, minvalue_amount=$6, minvalue_currency=$7, value_amount=$8, value_currency=$9, procurementmethod=$10," +
-        "procurementmethod_rationale=$11, awardcriteria=$12, awardcriteria_details=$13, submissionmethod=$14, submissionmethod_details=$15," +
-        "tenderperiod_startdate=$16, tenderperiod_enddate=$17, enquiryperiod_startdate=$18, enquiryperiod_enddate=$19 ,hasenquiries=$20, eligibilitycriteria=$21, awardperiod_startdate=$22," +
-        "awardperiod_enddate=$23, numberoftenderers=$24, amendment_date=$25, amendment_rationale=$26" +
-        " where id = $1 returning id", [
-        req.params.id, //id de licitación asignado por el sistema
-        req.body.tenderid, // id de licitación, puede ser cualquier cosa
-        req.body.title,
-        req.body.description,
-        req.body.status,
-        (isNaN(req.body.minvalue_amount)?null:req.body.minvalue_amount),
-        req.body.minvalue_currency,
-        (isNaN(req.body.value_amount)?null:req.body.value_amount),
-        req.body.value_currency,
-        req.body.procurementmethod,
-        req.body.procurementmethod_rationale,
-        req.body.awardcriteria,
-        req.body.awardcriteria_details,
-        req.body.submissionmethod,
-        req.body.submissionmethod_details,
-        (req.body.tenderperiod_startdate instanceof Date)?req.body.tenderperiod_startdate:null,
-        (req.body.tenderperiod_enddate instanceof Date)?req.body.tenderperiod_enddate:null,
-        (req.body.enquiryperiod_startdate instanceof Date)?req.body.enquiryperiod_startdate:null,
-        (req.body.enquiryperiod_enddate instanceof Date)?req.body.enquiryperiod_enddate:null,
-        req.body.hasenquiries,
-        req.body.eligibilitycriteria,
-        (req.body.awardperiod_startdate instanceof Date)?req.body.awardperiod_startdate:null,
-        (req.body.awardperiod_enddate instanceof Date)?req.body.awardperiod_enddate:null,
-        req.body.numberoftenderers,
-        (req.body.amendment_date instanceof Date )?req.body.amendment_date:null,
-        req.body.amendment_rationale
-    ]).then(function (data) {
-        res.json({
-            status : "Ok",
-            description : "Etapa de licitación actualizada",
-            data : data
-        });
-    }).catch(function (error){
-        res.json({
-            status: "Error",
-            description : "Ha ocurrido un error",
-            data : error
-        });
+    if (!isNaN(id)) {
+        edca_db.one("update tender set tenderid =$2, title= $3, description=$4, status=$5, minvalue_amount=$6, minvalue_currency=$7, value_amount=$8, value_currency=$9, procurementmethod=$10," +
+            "procurementmethod_rationale=$11, awardcriteria=$12, awardcriteria_details=$13, submissionmethod=$14, submissionmethod_details=$15," +
+            "tenderperiod_startdate=$16, tenderperiod_enddate=$17, enquiryperiod_startdate=$18, enquiryperiod_enddate=$19 ,hasenquiries=$20, eligibilitycriteria=$21, awardperiod_startdate=$22," +
+            "awardperiod_enddate=$23, numberoftenderers=$24, amendment_date=$25, amendment_rationale=$26" +
+            " where id = $1 returning id", [
+            id, //id de licitación asignado por el sistema
+            req.body.tenderid, // id de licitación, puede ser cualquier cosa
+            req.body.title,
+            req.body.description,
+            req.body.status,
+            (isNaN(req.body.minvalue_amount) ? null : req.body.minvalue_amount),
+            req.body.minvalue_currency,
+            (isNaN(req.body.value_amount) ? null : req.body.value_amount),
+            req.body.value_currency,
+            req.body.procurementmethod,
+            req.body.procurementmethod_rationale,
+            req.body.awardcriteria,
+            req.body.awardcriteria_details,
+            req.body.submissionmethod,
+            req.body.submissionmethod_details,
+            (req.body.tenderperiod_startdate instanceof Date) ? req.body.tenderperiod_startdate : null,
+            (req.body.tenderperiod_enddate instanceof Date) ? req.body.tenderperiod_enddate : null,
+            (req.body.enquiryperiod_startdate instanceof Date) ? req.body.enquiryperiod_startdate : null,
+            (req.body.enquiryperiod_enddate instanceof Date) ? req.body.enquiryperiod_enddate : null,
+            req.body.hasenquiries,
+            req.body.eligibilitycriteria,
+            (req.body.awardperiod_startdate instanceof Date) ? req.body.awardperiod_startdate : null,
+            (req.body.awardperiod_enddate instanceof Date) ? req.body.awardperiod_enddate : null,
+            req.body.numberoftenderers,
+            (req.body.amendment_date instanceof Date ) ? req.body.amendment_date : null,
+            req.body.amendment_rationale
+        ]).then(function (data) {
+            res.json({
+                status: "Ok",
+                description: "Etapa de licitación actualizada",
+                data: data
+            });
+        }).catch(function (error) {
+            res.json({
+                status: "Error",
+                description: "Ha ocurrido un error",
+                data: error
+            });
 
-    });
+        });
+    }else {
+        res.status(400).json({
+            status : "Error",
+            description: "Ha ocurrido un error",
+            data: {
+                message: "Parámetros incorrectos."
+            }
+        });
+    }
 });
 
 // Award
 router.post('/update/award/:id',verifyToken, function (req, res){
-    edca_db.one("update award set awardid=$2, title= $3, description=$4,status=$5,award_date=$6,value_amount=$7,value_currency=$8,contractperiod_startdate=$9," +
-        "contractperiod_enddate=$10,amendment_date=$11,amendment_rationale=$12 " +
-        " where id = $1 returning id",[
-        req.params.id, // id de adjudicación asignado por el sistema
-        req.body.awardid, // id de adjudicación, puede ser cualquier cosa
-        req.body.title,
-        req.body.description,
-        req.body.status,
-        (req.body.award_date instanceof Date)?req.body.award_date:null,
-        (isNaN(req.body.value_amount)?null:req.body.value_amount),
-        req.body.value_currency,
-        (req.body.contractperiod_startdate instanceof Date )?req.body.contractperiod_startdate:null,
-        (req.body.contractperiod_enddate instanceof Date )?req.body.contractperiod_enddate:null,
-        (req.body.amendment_date instanceof Date )?req.body.amendment_date:null,
-        req.body.amendment_rationale
-    ]).then(function(data){
-        res.json ({
-            status: "Ok",
-            description: "Etapa de ajudicación actualizada",
-            data: data
-        });
+    var id = Math.abs( req.params.id );
 
-    }).catch(function(error){
-        res.json({
-            status : "Error",
-            description : "Ha ocurrido un error",
-            data : error
+    if (!isNaN(id )) {
+        edca_db.one("update award set awardid=$2, title= $3, description=$4,status=$5,award_date=$6,value_amount=$7,value_currency=$8,contractperiod_startdate=$9," +
+            "contractperiod_enddate=$10,amendment_date=$11,amendment_rationale=$12 " +
+            " where id = $1 returning id", [
+            id, // id de adjudicación asignado por el sistema
+            req.body.awardid, // id de adjudicación, puede ser cualquier cosa
+            req.body.title,
+            req.body.description,
+            req.body.status,
+            (req.body.award_date instanceof Date) ? req.body.award_date : null,
+            (isNaN(req.body.value_amount) ? null : req.body.value_amount),
+            req.body.value_currency,
+            (req.body.contractperiod_startdate instanceof Date ) ? req.body.contractperiod_startdate : null,
+            (req.body.contractperiod_enddate instanceof Date ) ? req.body.contractperiod_enddate : null,
+            (req.body.amendment_date instanceof Date ) ? req.body.amendment_date : null,
+            req.body.amendment_rationale
+        ]).then(function (data) {
+            res.json({
+                status: "Ok",
+                description: "Etapa de ajudicación actualizada",
+                data: data
+            });
+
+        }).catch(function (error) {
+            res.json({
+                status: "Error",
+                description: "Ha ocurrido un error",
+                data: error
+            });
         });
-    });
+    }else {
+        res.status(400).json({
+            status : "Error",
+            description : "Ha ocurrido  un error",
+            data : "Parámetros incorrectos "
+        });
+    }
 });
 
 // Contract
 router.post('/update/contract/:id',verifyToken, function (req, res){
-    edca_db.one("update contract set contractid=$2, awardid=$3, title=$4, description=$5, status=$6, period_startdate=$7, period_enddate=$8, value_amount=$9, value_currency=$10," +
-        " datesigned=$11, amendment_date=$12, amendment_rationale=$13 " +
-        " where id = $1 returning id", [
-        req.params.id, // id del proceso de contratación
-        req.body.contractid, // id de la etapa de contrato, puede ser cualquier cosa
-        req.body.awardid, // id de la etapa de adjudicación, puede ser cualquier cosa, pero debe hacer match con la etapa de adjudicación
-        req.body.title,
-        req.body.description,
-        req.body.status,
-        (req.body.period_startdate instanceof Date)?req.body.period_startdate:null,
-        (req.body.period_enddate instanceof Date)?req.body.period_enddate:null,
-        (isNaN(req.body.value_amount)?null:req.body.value_amount),
-        req.body.value_currency,
-        (req.body.datesigned instanceof Date )?req.body.datesigned:null,
-        (req.body.amendment_date instanceof Date )?req.body.amendment_date:null,
-        req.body.amendment_rationale
-    ]).then(function (data) {
-        res.json({
-            status : "Ok",
-            description : "Etapa de contrato actualizada",
-            data : data
-        })
-    }).catch(function (error) {
-        res.json ({
-            status : "Ok",
-            description : "Ha ocurrido un error",
-            data : error
+
+    var id = Math.abs( req.params.id );
+
+    if ( !isNaN(id) ) {
+        edca_db.one("update contract set contractid=$2, awardid=$3, title=$4, description=$5, status=$6, period_startdate=$7, period_enddate=$8, value_amount=$9, value_currency=$10," +
+            " datesigned=$11, amendment_date=$12, amendment_rationale=$13 " +
+            " where id = $1 returning id", [
+            id, // id del proceso de contratación
+            req.body.contractid, // id de la etapa de contrato, puede ser cualquier cosa
+            req.body.awardid, // id de la etapa de adjudicación, puede ser cualquier cosa, pero debe hacer match con la etapa de adjudicación
+            req.body.title,
+            req.body.description,
+            req.body.status,
+            (req.body.period_startdate instanceof Date) ? req.body.period_startdate : null,
+            (req.body.period_enddate instanceof Date) ? req.body.period_enddate : null,
+            (isNaN(req.body.value_amount) ? null : req.body.value_amount),
+            req.body.value_currency,
+            (req.body.datesigned instanceof Date ) ? req.body.datesigned : null,
+            (req.body.amendment_date instanceof Date ) ? req.body.amendment_date : null,
+            req.body.amendment_rationale
+        ]).then(function (data) {
+            res.json({
+                status: "Ok",
+                description: "Etapa de contrato actualizada",
+                data: data
+            })
+        }).catch(function (error) {
+            res.json({
+                status: "Ok",
+                description: "Ha ocurrido un error",
+                data: error
+            });
         });
-    });
+    }else {
+        res.status(400).json({
+            status : 'Error',
+            description : "Ha ocurrido un error",
+            data : {
+                message : "Parámetos incorrectos."
+            }
+        })
+    }
 });
 
 // Publisher
 router.post('/update/publisher/:id',verifyToken, function (req, res){
-    edca_db.one("update publisher set name=$2, scheme=$3, uid=$4, uri=$5 where id = $1 returning ContractingProcess_id, id as publisher_id, name, scheme, uid, uri", [
-        req.params.id, //id del proceso del publisher
-        req.body.name,
-        req.body.scheme,
-        req.body.uid,
-        req.body.uri
-    ]).then(function (data) {
-        res.json({
-            status:  "Ok",
-            description : "Publisher actualizado",
-            data : data
+    var id = Math.abs( req.params.id );
+
+    if ( !isNaN(id )) {
+        edca_db.one("update publisher set name=$2, scheme=$3, uid=$4, uri=$5 where id = $1 returning ContractingProcess_id, id as publisher_id, name, scheme, uid, uri", [
+            id, //id del publisher
+            req.body.name,
+            req.body.scheme,
+            req.body.uid,
+            req.body.uri
+        ]).then(function (data) {
+            res.json({
+                status: "Ok",
+                description: "Publisher actualizado",
+                data: data
+            });
+        }).catch(function (error) {
+            res.json({
+                status: "Ok",
+                description: "Ha ocurrido un error",
+                data: error
+            })
         });
-    }).catch(function (error) {
-        res.json({
-            status : "Ok",
+    }else {
+        res.status(400).json({
+            status : "Error",
             description : "Ha ocurrido un error",
-            data : error
-        })
-    });
+            data : {
+                message : "Parámetros incorrectos"
+            }
+        });
+    }
 });
 
 /* * * * * * * *
@@ -652,10 +726,12 @@ router.put('/new/:path/item/',verifyToken, function (req, res){
             });
         });
     }else {
-        res.json({
+        res.status(400).json({
             status : "Error",
             description : "Ha ocurrido un error",
-            data :{}
+            data :{
+                message: "Parámetros incorrectos"
+            }
         })
     }
 });
@@ -696,11 +772,13 @@ router.put('/new/:path/amendmentchange/',verifyToken, function (req, res){
                 data: error
             });
         });
-    }else {
-        res.json({
+    } else {
+        res.status(400).json({
             status: "Error",
             description: "Ha ocurrido un error",
-            data: {}
+            data: {
+                message: "Parámetros incorrectos"
+            }
         });
     }
 });
@@ -743,8 +821,9 @@ router.put('/new/organization/:type',verifyToken, function (req, res){
                 description : "Ha ocurrido un error",
                 data : error
             });
-        });}else{
-        res.json({
+        });
+    }else {
+        res.status(400).json({
             stautus : "Error",
             description : "Ha ocurrido un error",
             data : {
@@ -792,10 +871,12 @@ router.put("/new/:path/milestone/",verifyToken, function (req, res) {
             });
         });
     }else {
-        res.json({
+        res.status(400).json({
             status: "Error",
             description :"Ha ocurrido un error",
-            data :{}
+            data :{
+                message: "Parámetros incorrectos"
+            }
         });
     }
 });
@@ -861,10 +942,12 @@ router.put('/new/:path/document/',verifyToken, function (req, res){
             });
         });
     }else{
-        res.json({
+        res.status(400).json({
             status: "Error",
             description: "Ha ocurrido un error",
-            data: {}
+            data: {
+                message : "Parámetros incorrectos"
+            }
         });
     }
 });
@@ -908,22 +991,21 @@ router.put('/new/transaction/',verifyToken, function (req, res){
             data : error
         });
     });
-
-
 });
 
 
 /* * * * * *
  * Delete  *
  * * * * * */
-router.delete('/delete/:path/:object_id',verifyToken,function (req, res ) {
+router.delete('/delete/:path/:id',verifyToken,function (req, res ) {
 
     var table = getTableName( req.params.path, 'delete' );
+    var id = req.params.id;
 
-    if (table != "") {
+    if (table != "" && !isNaN( id )) {
         edca_db.one('delete from $1~ cascade where id = $2 returning id', [
             table,
-            req.params.object_id
+            id
         ]).then(function (data) {
             res.json({
                 status: "Ok",
@@ -938,7 +1020,7 @@ router.delete('/delete/:path/:object_id',verifyToken,function (req, res ) {
             })
         });
     }else {
-        res.json({
+        res.status(400).json({
             status : "Error",
             description: "Ha ocurrido un error",
             data : {
