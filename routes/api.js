@@ -635,11 +635,14 @@ router.put('/new/contractingprocess',verifyToken, function(req, res){
 
         edca_db.tx(function (t) {
 
-            return t.one("insert into ContractingProcess (fecha_creacion, hora_creacion, ocid, stage ) values " +
-                "(current_date, current_time,  $1, $2)" +
+            return t.one("insert into ContractingProcess (fecha_creacion, hora_creacion, ocid, stage, uri, license, publicationpolicy ) values " +
+                "(current_date, current_time,  $1, $2, $3, $4, $5)" +
                 " returning id", [
                 ocid,
-                stage
+                stage,
+                req.body.uri,
+                req.body.license,
+                req.body.publicationpolicy
             ]).then(function (process) {
 
                 return t.batch([
