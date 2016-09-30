@@ -294,9 +294,12 @@ router.post("/update/contractingprocess/:id", verifyToken, function (req, res){
 
     if ( !isNaN( id ) && !isNaN( stage ) && stage <= 4){
 
-        edca_db.one("update contractingprocess set ocid = $1, stage = $2 where id = $3 returning id, ocid, stage", [
+        edca_db.one("update contractingprocess set ocid = $1, stage = $2, uri=$3, license=$4, publicationpolicy=$5 where id = $6 returning id, ocid, stage", [
             req.body.ocid,
             stage,
+            req.body.uri,
+            req.body.license,
+            req.body.publicationpolicy,
             id // id del proceso de contratación
         ]).then(function (data) {
             res.json({
