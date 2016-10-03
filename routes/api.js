@@ -207,6 +207,38 @@ function getTableName( path, opType ) {
     return table;
 }
 
+var ocds = require('../ocds');
+router.get('/get/ocds/releasepackage/:id',function (req,res) {
+    var id = Math.abs(req.params.id);
+
+    if (!isNaN(id)) {
+
+        ocds.getOCDSJSON(id, 'release-package', edca_db).then(function (data) {
+            delete data.localid;
+            res.json ({
+                status : "Ok",
+                description: "Relese package",
+                data : data
+            });
+
+        }).catch(function (error) {
+            res.json ({
+                status : "Error",
+                description: "Ha ocurrido un error",
+                data : error
+            });
+        });
+    }else{
+        res.json({
+            status: "Error",
+            description: "Ha ocurrido un error.",
+            data: {
+                message: "Parámetros incorrectos."
+            }
+        });
+    }
+});
+
 router.get('/get/:path/:limit/:offset', verifyToken, function(req, res){
 
     var table = getTableName( req.params.path, 'read' );
