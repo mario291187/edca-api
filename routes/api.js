@@ -463,7 +463,9 @@ router.post('/update/organization/:type/:id',verifyToken, function (req, res){
         res.status(400).json ({
             status : "Error",
             description: "Ha ocurrido un error",
-            data: {}
+            data: {
+                message : "Parámetros incorrectos"
+            }
         });
     }
 });
@@ -836,13 +838,15 @@ router.put('/new/:path/amendmentchange/',verifyToken, function (req, res){
 router.put('/new/organization/:type',verifyToken, function (req, res){
 
     //type -> supplier,tenderer
-    if (req.params.type == "supplier" || req.params.type == "tenderer"){
+    var contractingprocess_id = Math.abs(req.body.contractingprocess_id);
+
+    if ((req.params.type == "supplier" || req.params.type == "tenderer") && !isNaN(contractingprocess_id)){
 
         edca_db.one("insert into $17~" +
             " (contractingprocess_id, identifier_scheme, identifier_id, identifier_legalname, identifier_uri, name, address_streetaddress," +
             " address_locality, address_region, address_postalcode, address_countryname, contactpoint_name, contactpoint_email, contactpoint_telephone," +
             " contactpoint_faxnumber, contactpoint_url) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) returning id", [
-            req.body.contractingprocess_id, // id del proceso de contratación
+            contractingprocess_id, // id del proceso de contratación
             req.body.identifier_scheme,
             req.body.identifier_id,
             req.body.identifier_legalname,
@@ -897,10 +901,11 @@ router.put("/new/:path/milestone/",verifyToken, function (req, res) {
             break;
     }
 
-    if ( table != "" ) {
+    var contractingprocess_id = Math.abs( req.body.contractingprocess_id);
+    if ( table != "" && !isNaN(contractingprocess_id) ) {
         edca_db.one('insert into $1~ (contractingprocess_id, milestoneid, title, description, duedate, date_modified, status) values ($2,$3,$4,$5,$6,$7,$8) returning id', [
             table, // tabla donde se registra el hito
-            req.body.contractingprocess_id, // id del proceso de contratación
+            contractingprocess_id, // id del proceso de contratación
             "milestone-"+(new Date().getTime()),//req.body.milestoneid, //id del hito, puede ser cualquier cosa
             req.body.title,
             req.body.description,
