@@ -208,7 +208,7 @@ function getTableName( path, opType ) {
 }
 
 var ocds = require('../ocds');
-router.get('/get/ocds/releasepackage/:id',function (req,res) {
+router.get('/get/ocds/releasepackage/:id',verifyToken,function (req,res) {
     var id = Math.abs(req.params.id);
 
     if (!isNaN(id)) {
@@ -751,7 +751,7 @@ router.put('/new/:path/item/',verifyToken, function (req, res){
             ' quantity, unit_name, unit_value_amount, unit_value_currency) values ($2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) returning id', [
             table, // tabla donde se inserta el item, opciones -> tenderitems, awarditems, ...
             req.body.contractingprocess_id, // id del proceso de contratación
-            req.body.itemid, //id del item, puede ser cualquier cosa
+            "item-"+(new Date().getTime()),//req.body.itemid, //id del item, puede ser cualquier cosa
             req.body.description,
             req.body.classification_scheme,
             req.body.classification_id,
@@ -901,7 +901,7 @@ router.put("/new/:path/milestone/",verifyToken, function (req, res) {
         edca_db.one('insert into $1~ (contractingprocess_id, milestoneid, title, description, duedate, date_modified, status) values ($2,$3,$4,$5,$6,$7,$8) returning id', [
             table, // tabla donde se registra el hito
             req.body.contractingprocess_id, // id del proceso de contratación
-            req.body.milestoneid, //id del hito, puede ser cualquier cosa
+            "milestone-"+(new Date().getTime()),//req.body.milestoneid, //id del hito, puede ser cualquier cosa
             req.body.title,
             req.body.description,
             (req.body.duedate instanceof Date) ? req.body.duedate : null,
@@ -937,6 +937,7 @@ router.put('/new/:path/document/',verifyToken, function (req, res){
     //path -> planning, tender, award, contract, implementation, tender/milestone, implementation/milestone
 
     var table = "";
+    var contractingprocess_id = Math.abs(req.body.contractingprocess_id);
 
     switch( req.params.path ){
         case "planning":
@@ -964,13 +965,14 @@ router.put('/new/:path/document/',verifyToken, function (req, res){
             */
     }
 
-    if ( table != "") {
-        edca_db.one('insert into $1~ (contractingprocess_id, document_type, documentid, title, description, url, date_published, date_modified, format, language) values ($2,$3,$4,$5,$6,$7,$8,$9,$10,$11) returning id',
+    if ( table != "" && !isNaN(contractingprocess_id) ){
+        edca_db.one('insert into $1~ (contractingprocess_id, document_type, documentid, title, description, url, date_published, date_modified, format, language) values ($2,$3,$4,$5,$6,$7,$8,$9,$10,$11) ' +
+            'returning id as document_id, contractingprocess_id',
             [
                 table, //tabla donde se inserta el documento, opciones: planningdocuments, tenderdocuments, awarddocuments, contractdocuments ...
-                req.body.contractingprocess_id, // id del proceso de contratación
+                contractingprocess_id, // id del proceso de contratación
                 req.body.document_type,
-                req.body.documentid, //id del ducumento, puede ser cualquier cosa
+                "doc-"+(new Date().getTime()),//req.body.documentid, //id del ducumento, puede ser cualquier cosa
                 req.body.title,
                 req.body.description,
                 req.body.url,
@@ -1006,41 +1008,53 @@ router.put('/new/:path/document/',verifyToken, function (req, res){
 // Implementation -> Transactions
 router.put('/new/transaction/',verifyToken, function (req, res){
 
-    edca_db.one('insert into implementationtransactions (contractingprocess_id, transactionid, source, implementation_date, value_amount, value_currency, ' +
-        'providerorganization_scheme,providerorganization_id,providerorganization_legalname,providerorganization_uri,' +
-        'receiverorganization_scheme,receiverorganization_id,receiverorganization_legalname,receiverorganization_uri, uri) ' +
-        'values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) returning id',[
-        req.body.contractingprocess_id, // id del proceso de contratación
-        req.body.transactionid,
-        req.body.source,
-        (req.body.implementation_date instanceof Date )?req.body.implementation_date:null,
-        (isNaN(req.body.value_amount)?null:req.body.value_amount),
-        req.body.value_currency,
+    var contractingprocess_id = Math.abs(req.params.contractingprocess_id);
+    if ( !isNaN(contractingprocess_id)) {
 
-        req.body.providerorganization_scheme,
-        req.body.providerorganization_id,
-        req.body.providerorganization_legalname,
-        req.body.providerorganization_uri,
+        edca_db.one('insert into implementationtransactions (contractingprocess_id, transactionid, source, implementation_date, value_amount, value_currency, ' +
+            'providerorganization_scheme,providerorganization_id,providerorganization_legalname,providerorganization_uri,' +
+            'receiverorganization_scheme,receiverorganization_id,receiverorganization_legalname,receiverorganization_uri, uri) ' +
+            'values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) returning id', [
+            req.body.contractingprocess_id, // id del proceso de contratación
+            "transaction-" + (new Date().getTime()),//req.body.transactionid,
+            req.body.source,
+            (req.body.implementation_date instanceof Date ) ? req.body.implementation_date : null,
+            (isNaN(req.body.value_amount) ? null : req.body.value_amount),
+            req.body.value_currency,
 
-        req.body.receiverorganization_scheme,
-        req.body.receiverorganization_id,
-        req.body.receiverorganization_legalname,
-        req.body.receiverorganization_uri,
+            req.body.providerorganization_scheme,
+            req.body.providerorganization_id,
+            req.body.providerorganization_legalname,
+            req.body.providerorganization_uri,
 
-        req.body.uri
-    ]).then(function (data) {
-        res.json({
-            status :  "Ok",
-            description: "Transacción registrada",
-            data : data
+            req.body.receiverorganization_scheme,
+            req.body.receiverorganization_id,
+            req.body.receiverorganization_legalname,
+            req.body.receiverorganization_uri,
+
+            req.body.uri
+        ]).then(function (data) {
+            res.json({
+                status: "Ok",
+                description: "Transacción registrada",
+                data: data
+            });
+        }).catch(function (error) {
+            res.json({
+                status: "Error",
+                description: "Ha ocurrido un error",
+                data: error
+            });
         });
-    }).catch(function (error) {
+    }else {
         res.json({
-            status :  "Error",
-            description:"Ha ocurrido un error",
-            data : error
-        });
-    });
+            status: "Error",
+            description: "Ha ocurrido un error",
+            data : {
+                message : "Parámetros incorrectos"
+            }
+        })
+    }
 });
 
 
