@@ -733,6 +733,7 @@ router.put('/new/contractingprocess',verifyToken, function(req, res){
 // Items
 router.put('/new/:path/item/',verifyToken, function (req, res){
 
+    var contractingprocess_id = Math.abs(req.body.contractigprocess_id);
     // path -> tender, award, contract
     var table ="";
     switch ( req.params.path ){
@@ -747,12 +748,12 @@ router.put('/new/:path/item/',verifyToken, function (req, res){
             break;
     }
 
-    if ( table != "" ) {
+    if ( table != "" && !isNaN(contractingprocess_id) ) {
 
         edca_db.one('insert into $1~ (contractingprocess_id, itemid, description, classification_scheme, classification_id, classification_description, classification_uri,' +
             ' quantity, unit_name, unit_value_amount, unit_value_currency) values ($2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) returning id', [
             table, // tabla donde se inserta el item, opciones -> tenderitems, awarditems, ...
-            req.body.contractingprocess_id, // id del proceso de contratación
+            contractingprocess_id, // id del proceso de contratación
             "item-"+(new Date().getTime()),//req.body.itemid, //id del item, puede ser cualquier cosa
             req.body.description,
             req.body.classification_scheme,
@@ -1020,7 +1021,7 @@ router.put('/new/transaction/',verifyToken, function (req, res){
             'providerorganization_scheme,providerorganization_id,providerorganization_legalname,providerorganization_uri,' +
             'receiverorganization_scheme,receiverorganization_id,receiverorganization_legalname,receiverorganization_uri, uri) ' +
             'values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) returning id', [
-            req.body.contractingprocess_id, // id del proceso de contratación
+            contractingprocess_id, // id del proceso de contratación
             "transaction-" + (new Date().getTime()),//req.body.transactionid,
             req.body.source,
             (req.body.implementation_date instanceof Date ) ? req.body.implementation_date : null,
