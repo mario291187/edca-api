@@ -787,9 +787,9 @@ router.put('/new/contractingprocess',verifyToken, function(req, res){
 });
 
 // Items
-router.put('/new/:path/item/',verifyToken, function (req, res){
+router.put('/new/:path/item/:contractingprocess_id',verifyToken, function (req, res){
 
-    var contractingprocess_id = Math.abs(req.body.contractigprocess_id);
+    var contractingprocess_id = Math.abs(req.params.contractigprocess_id);
     // path -> tender, award, contract
     var table ="";
     switch ( req.params.path ){
@@ -846,9 +846,10 @@ router.put('/new/:path/item/',verifyToken, function (req, res){
 });
 
 // Amendment changes
-router.put('/new/:path/amendmentchange/',verifyToken, function (req, res){
+router.put('/new/:path/amendmentchange/:contractingprocess_id',verifyToken, function (req, res){
     // path -> tender, award, contract
 
+    var contractingprocess_id = Math.abs( req.params.contractingprocess_id);
     var table = "";
     switch ( req.params.path ) {
         case "tender":
@@ -862,10 +863,10 @@ router.put('/new/:path/amendmentchange/',verifyToken, function (req, res){
             break
     }
 
-    if ( table != "") {
+    if ( table != "" && !isNaN(contractingprocess_id)) {
         edca_db.one('insert into $1~ (contractingprocess_id, property, former_value) values ($2,$3,$4) returning contractingprocess_id, id as amendmentchange_id', [
             table, //tabla donde se inserta el cambio
-            req.body.contractingprocess_id, // id del proceso de contratación
+            contractingprocess_id, // id del proceso de contratación
             req.body.property,
             req.body.former_value
         ]).then(function (data) {
@@ -945,7 +946,7 @@ router.put('/new/organization/:type/:contractingprocess_id',verifyToken, functio
 });
 
 //milestones -> hitos
-router.put("/new/:path/milestone/",verifyToken, function (req, res) {
+router.put("/new/:path/milestone/:contractingprocess_id",verifyToken, function (req, res) {
     //stage -> tender, implementation
 
     var table = "";
@@ -958,7 +959,7 @@ router.put("/new/:path/milestone/",verifyToken, function (req, res) {
             break;
     }
 
-    var contractingprocess_id = Math.abs( req.body.contractingprocess_id);
+    var contractingprocess_id = Math.abs( req.params.contractingprocess_id);
     if ( table != "" && !isNaN(contractingprocess_id) ) {
         edca_db.one('insert into $1~ (contractingprocess_id, milestoneid, title, description, duedate, date_modified, status) values ($2,$3,$4,$5,$6,$7,$8) returning id', [
             table, // tabla donde se registra el hito
@@ -995,11 +996,11 @@ router.put("/new/:path/milestone/",verifyToken, function (req, res) {
 
 
 // Documents
-router.put('/new/:path/document/',verifyToken, function (req, res){
+router.put('/new/:path/document/:contractingprocess_id',verifyToken, function (req, res){
     //path -> planning, tender, award, contract, implementation, tender/milestone, implementation/milestone
 
     var table = "";
-    var contractingprocess_id = Math.abs(req.body.contractingprocess_id);
+    var contractingprocess_id = Math.abs(req.params.contractingprocess_id);
 
     switch( req.params.path ){
         case "planning":
@@ -1068,7 +1069,7 @@ router.put('/new/:path/document/',verifyToken, function (req, res){
 
 
 // Implementation -> Transactions
-router.put('/new/transaction/',verifyToken, function (req, res){
+router.put('/new/transaction/:contractingprocess_id',verifyToken, function (req, res){
 
     var contractingprocess_id = Math.abs(req.params.contractingprocess_id);
     if ( !isNaN(contractingprocess_id)) {
