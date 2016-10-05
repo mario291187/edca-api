@@ -429,8 +429,8 @@ router.post('/update/planning/:contractingprocess_id',verifyToken, function (req
 });
 
 
-router.post('/api/update/buyer/:contractingprocess_id', function () {
-    var id = Math.abs( req.params.id );
+router.post('/update/buyer/:contractingprocess_id',verifyToken, function (req, res) {
+    var id = Math.abs( req.params.contractingprocess_id );
     if ( !isNaN(id) ) {
 
         edca_db.one("update buyer set identifier_scheme= $2, identifier_id =$3, identifier_legalname=$4, identifier_uri=$5, name = $6, address_streetaddress=$7," +
