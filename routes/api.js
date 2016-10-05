@@ -511,7 +511,7 @@ router.post('/update/tender/:contractingprocess_id',verifyToken, function (req, 
             req.body.eligibilitycriteria,
             dateCol(req.body.awardperiod_startdate),
             dateCol(req.body.awardperiod_enddate),
-            req.body.numberoftenderers,
+            numericCol(req.body.numberoftenderers),
             dateCol(req.body.amendment_date),
             req.body.amendment_rationale
         ]).then(function (data) {
