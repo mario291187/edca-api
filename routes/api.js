@@ -495,16 +495,16 @@ router.post('/update/tender/:contractingprocess_id',verifyToken, function (req, 
             req.body.awardcriteria_details,
             req.body.submissionmethod,
             req.body.submissionmethod_details,
-            (req.body.tenderperiod_startdate instanceof Date) ? req.body.tenderperiod_startdate : null,
-            (req.body.tenderperiod_enddate instanceof Date) ? req.body.tenderperiod_enddate : null,
-            (req.body.enquiryperiod_startdate instanceof Date) ? req.body.enquiryperiod_startdate : null,
-            (req.body.enquiryperiod_enddate instanceof Date) ? req.body.enquiryperiod_enddate : null,
+            (req.body.tenderperiod_startdate != "") ? req.body.tenderperiod_startdate : null,
+            (req.body.tenderperiod_enddate != "") ? req.body.tenderperiod_enddate : null,
+            (req.body.enquiryperiod_startdate != "") ? req.body.enquiryperiod_startdate : null,
+            (req.body.enquiryperiod_enddate != "") ? req.body.enquiryperiod_enddate : null,
             req.body.hasenquiries,
             req.body.eligibilitycriteria,
-            (req.body.awardperiod_startdate instanceof Date) ? req.body.awardperiod_startdate : null,
-            (req.body.awardperiod_enddate instanceof Date) ? req.body.awardperiod_enddate : null,
+            (req.body.awardperiod_startdate != "") ? req.body.awardperiod_startdate : null,
+            (req.body.awardperiod_enddate != "") ? req.body.awardperiod_enddate : null,
             req.body.numberoftenderers,
-            (req.body.amendment_date instanceof Date ) ? req.body.amendment_date : null,
+            (req.body.amendment_date != "" ) ? req.body.amendment_date : null,
             req.body.amendment_rationale
         ]).then(function (data) {
             res.json({
@@ -544,12 +544,12 @@ router.post('/update/award/:contractingprocess_id',verifyToken, function (req, r
             req.body.title,
             req.body.description,
             req.body.status,
-            (req.body.award_date instanceof Date) ? req.body.award_date : null,
+            (req.body.award_date != "") ? req.body.award_date : null,
             (isNaN(req.body.value_amount) ? null : req.body.value_amount),
             req.body.value_currency,
-            (req.body.contractperiod_startdate instanceof Date ) ? req.body.contractperiod_startdate : null,
-            (req.body.contractperiod_enddate instanceof Date ) ? req.body.contractperiod_enddate : null,
-            (req.body.amendment_date instanceof Date ) ? req.body.amendment_date : null,
+            (req.body.contractperiod_startdate != "" ) ? req.body.contractperiod_startdate : null,
+            (req.body.contractperiod_enddate != "" ) ? req.body.contractperiod_enddate : null,
+            (req.body.amendment_date != "" ) ? req.body.amendment_date : null,
             req.body.amendment_rationale
         ]).then(function (data) {
             res.json({
@@ -589,12 +589,12 @@ router.post('/update/contract/:contractingprocess_id',verifyToken, function (req
             req.body.title,
             req.body.description,
             req.body.status,
-            (req.body.period_startdate instanceof Date) ? req.body.period_startdate : null,
-            (req.body.period_enddate instanceof Date) ? req.body.period_enddate : null,
+            (req.body.period_startdate != "") ? req.body.period_startdate : null,
+            (req.body.period_enddate != "") ? req.body.period_enddate : null,
             (isNaN(req.body.value_amount) ? null : req.body.value_amount),
             req.body.value_currency,
-            (req.body.datesigned instanceof Date ) ? req.body.datesigned : null,
-            (req.body.amendment_date instanceof Date ) ? req.body.amendment_date : null,
+            (req.body.datesigned != "" ) ? req.body.datesigned : null,
+            (req.body.amendment_date != "" ) ? req.body.amendment_date : null,
             req.body.amendment_rationale
         ]).then(function (data) {
             res.json({
@@ -910,8 +910,8 @@ router.put("/new/:path/milestone/",verifyToken, function (req, res) {
             "milestone-"+(new Date().getTime()),//req.body.milestoneid, //id del hito, puede ser cualquier cosa
             req.body.title,
             req.body.description,
-            (req.body.duedate instanceof Date) ? req.body.duedate : null,
-            (req.body.date_modified instanceof Date) ? req.body.date_modified : null,
+            (req.body.duedate != "") ? req.body.duedate : null,
+            (req.body.date_modified != "") ? req.body.date_modified : null,
             req.body.status
         ]).then(function (data) {
             res.json({
@@ -982,8 +982,8 @@ router.put('/new/:path/document/',verifyToken, function (req, res){
                 req.body.title,
                 req.body.description,
                 req.body.url,
-                (req.body.date_published instanceof Date ) ? req.body.date_published : null,
-                (req.body.date_modified instanceof Date ) ? req.body.date_modified : null,
+                (req.body.date_published != "" ) ? req.body.date_published : null,
+                (req.body.date_modified != "" ) ? req.body.date_modified : null,
                 req.body.format,
                 req.body.language // lenguaje del documento en código de dos letras
             ]).then(function (data) {
@@ -1024,7 +1024,7 @@ router.put('/new/transaction/',verifyToken, function (req, res){
             contractingprocess_id, // id del proceso de contratación
             "transaction-" + (new Date().getTime()),//req.body.transactionid,
             req.body.source,
-            (req.body.implementation_date instanceof Date ) ? req.body.implementation_date : null,
+            (req.body.implementation_date != "" ) ? req.body.implementation_date : null,
             (isNaN(req.body.value_amount) ? null : req.body.value_amount),
             req.body.value_currency,
 
