@@ -892,10 +892,10 @@ router.put('/new/:path/amendmentchange/',verifyToken, function (req, res){
     }
 });
 
-router.put('/new/organization/:type',verifyToken, function (req, res){
+router.put('/new/organization/:type/:contractingprocess_id',verifyToken, function (req, res){
 
     //type -> supplier,tenderer
-    var contractingprocess_id = Math.abs(req.body.contractingprocess_id);
+    var contractingprocess_id = Math.abs(req.params.contractingprocess_id);
 
     if ((req.params.type == "supplier" || req.params.type == "tenderer") && !isNaN(contractingprocess_id)){
 
