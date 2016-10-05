@@ -428,11 +428,59 @@ router.post('/update/planning/:contractingprocess_id',verifyToken, function (req
     }
 });
 
-// organizations -> buyer, tenderers, suppliers
+
+router.post('/api/update/buyer/:contractingprocess_id', function () {
+    var id = Math.abs( req.params.id );
+    if ( !isNaN(id) ) {
+
+        edca_db.one("update buyer set identifier_scheme= $2, identifier_id =$3, identifier_legalname=$4, identifier_uri=$5, name = $6, address_streetaddress=$7," +
+            " address_locality=$8, address_region =$9, address_postalcode=$10, address_countryname=$11, contactpoint_name=$12, contactpoint_email=$13, contactpoint_telephone=$14," +
+            " contactpoint_faxnumber=$15, contactpoint_url=$16 where contractingprocess_id = $1 returning id, contractingprocess_id", [
+            id, // id del proceso
+            req.body.identifier_scheme,
+            req.body.identifier_id,
+            req.body.identifier_legalname,
+            req.body.identifier_uri,
+            req.body.name,
+            req.body.address_streetaddress,
+            req.body.address_locality,
+            req.body.address_region,
+            req.body.address_postalcode,
+            req.body.address_countryname,
+            req.body.contactpoint_name,
+            req.body.contactpoint_email,
+            req.body.contactpoint_telephone,
+            req.body.contactpoint_faxnumber,
+            req.body.contactpoint_url
+        ]).then(function (data) {
+            res.json({
+                status: "Ok",
+                description: "Organización actualizada",
+                data: data
+            });
+        }).catch(function (error) {
+            res.json({
+                status: "Error",
+                description: "Ha ocurrido un error",
+                data: error
+            });
+        });
+    }else {
+        res.status(400).json ({
+            status : "Error",
+            description: "Ha ocurrido un error",
+            data: {
+                message : "Parámetros incorrectos"
+            }
+        });
+    }
+});
+
+// organizations -> tenderers, suppliers
 router.post('/update/organization/:type/:id',verifyToken, function (req, res){
 
     var id = Math.abs( req.params.id );
-    if ( (req.params.type == "buyer" || req.params.type == "tenderer" || req.params.type == "supplier") && !isNaN(id) ) {
+    if ( ( req.params.type == "tenderer" || req.params.type == "supplier") && !isNaN(id) ) {
 
         edca_db.one("update $1~ set identifier_scheme= $3, identifier_id =$4, identifier_legalname=$5, identifier_uri=$6, name = $7, address_streetaddress=$8," +
             " address_locality=$9, address_region =$10, address_postalcode=$11, address_countryname=$12, contactpoint_name=$13, contactpoint_email=$14, contactpoint_telephone=$15," +
@@ -629,12 +677,12 @@ router.post('/update/contract/:contractingprocess_id',verifyToken, function (req
 });
 
 // Publisher
-router.post('/update/publisher/:id',verifyToken, function (req, res){
-    var id = Math.abs( req.params.id );
+router.post('/update/publisher/:contractingprocess_id',verifyToken, function (req, res){
+    var id = Math.abs( req.params.contractingprocess_id );
 
     if ( !isNaN(id )) {
-        edca_db.one("update publisher set name=$2, scheme=$3, uid=$4, uri=$5 where id = $1 returning ContractingProcess_id, id as publisher_id, name, scheme, uid, uri", [
-            id, //id del publisher
+        edca_db.one("update publisher set name=$2, scheme=$3, uid=$4, uri=$5 where contractingprocess_id = $1 returning ContractingProcess_id, id as publisher_id, name, scheme, uid, uri", [
+            id, //id del proceso
             req.body.name,
             req.body.scheme,
             req.body.uid,
