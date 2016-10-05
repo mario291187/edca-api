@@ -358,18 +358,18 @@ router.post("/update/contractingprocess/:id", verifyToken, function (req, res){
 });
 
 //Planning
-router.post('/update/planning/:id',verifyToken, function (req, res){
+router.post('/update/planning/:contractingprocess_id',verifyToken, function (req, res){
 
-    var id = Math.abs( req.params.id );
+    var id = Math.abs( req.params.contractingprocess_id );
 
     if (!isNaN( id )) {
         edca_db.tx(function (t) {
 
             return this.batch([
                 //planning
-                t.one("update planning set rationale = $1 where id = $2 returning id, contractingprocess_id", [
+                t.one("update planning set rationale = $1 where contractingprocess_id = $2 returning id, contractingprocess_id", [
                     req.body.rationale,
-                    id //id de la planeación
+                    id //id del proceso
                 ])
             ]).then(function (data) {
 
@@ -471,16 +471,16 @@ router.post('/update/organization/:type/:id',verifyToken, function (req, res){
 });
 
 // Tender
-router.post('/update/tender/:id',verifyToken, function (req, res){
-    var id = Math.abs(req.params.id);
+router.post('/update/tender/:contractingprocess_id',verifyToken, function (req, res){
+    var id = Math.abs(req.params.contractingprocess_id);
 
     if (!isNaN(id)) {
         edca_db.one("update tender set tenderid =$2, title= $3, description=$4, status=$5, minvalue_amount=$6, minvalue_currency=$7, value_amount=$8, value_currency=$9, procurementmethod=$10," +
             "procurementmethod_rationale=$11, awardcriteria=$12, awardcriteria_details=$13, submissionmethod=$14, submissionmethod_details=$15," +
             "tenderperiod_startdate=$16, tenderperiod_enddate=$17, enquiryperiod_startdate=$18, enquiryperiod_enddate=$19 ,hasenquiries=$20, eligibilitycriteria=$21, awardperiod_startdate=$22," +
             "awardperiod_enddate=$23, numberoftenderers=$24, amendment_date=$25, amendment_rationale=$26" +
-            " where id = $1 returning id", [
-            id, //id de licitación asignado por el sistema
+            " where contractingprocess_id = $1 returning id", [
+            id, //id de proceso asignado por el sistema
             req.body.tenderid, // id de licitación, puede ser cualquier cosa
             req.body.title,
             req.body.description,
@@ -532,13 +532,13 @@ router.post('/update/tender/:id',verifyToken, function (req, res){
 });
 
 // Award
-router.post('/update/award/:id',verifyToken, function (req, res){
-    var id = Math.abs( req.params.id );
+router.post('/update/award/:contractingprocess_id',verifyToken, function (req, res){
+    var id = Math.abs( req.params.contractingprocess_id );
 
     if (!isNaN(id )) {
         edca_db.one("update award set awardid=$2, title= $3, description=$4,status=$5,award_date=$6,value_amount=$7,value_currency=$8,contractperiod_startdate=$9," +
-            "contractperiod_enddate=$10,amendment_date=$11,amendment_rationale=$12 " +
-            " where id = $1 returning id", [
+            "contractperiod_enddate=$10, amendment_date=$11, amendment_rationale=$12 " +
+            " where contractingprocess_id = $1 returning id", [
             id, // id de adjudicación asignado por el sistema
             req.body.awardid, // id de adjudicación, puede ser cualquier cosa
             req.body.title,
@@ -575,14 +575,14 @@ router.post('/update/award/:id',verifyToken, function (req, res){
 });
 
 // Contract
-router.post('/update/contract/:id',verifyToken, function (req, res){
+router.post('/update/contract/:contractingprocess_id',verifyToken, function (req, res){
 
-    var id = Math.abs( req.params.id );
+    var id = Math.abs( req.params.contractingprocess_id );
 
     if ( !isNaN(id) ) {
         edca_db.one("update contract set contractid=$2, awardid=$3, title=$4, description=$5, status=$6, period_startdate=$7, period_enddate=$8, value_amount=$9, value_currency=$10," +
             " datesigned=$11, amendment_date=$12, amendment_rationale=$13 " +
-            " where id = $1 returning id", [
+            " where contractingprocess_id = $1 returning id", [
             id, // id del proceso de contratación
             req.body.contractid, // id de la etapa de contrato, puede ser cualquier cosa
             req.body.awardid, // id de la etapa de adjudicación, puede ser cualquier cosa, pero debe hacer match con la etapa de adjudicación
