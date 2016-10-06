@@ -122,9 +122,9 @@ function verifyToken(req, res, next) {
 function getTableName( path, opType ) {
     var table = "";
     switch( path ){
-        case "contractingprocess":
+        /*case "contractingprocess":
             table = "contractingprocess";
-            break;
+            break;*/
         //Documents
         case "planning-document":
             table = "planningdocuments";
@@ -239,17 +239,15 @@ router.get('/get/ocds/releasepackage/:id',verifyToken,function (req,res) {
     }
 });
 
-router.get('/get/:path/:limit/:offset', verifyToken, function(req, res){
+router.get('/getall/:path/:contractingprocess_id/', verifyToken, function(req, res){
 
     var table = getTableName( req.params.path, 'read' );
-    var limit = Math.abs(req.params.limit);
-    var offset = Math.abs(req.params.offset);
+    var contractingprocess_id = Math.abs(req.params.contractingprocess_id);
 
-    if ( table != "" && !isNaN(limit) && !isNaN(offset)) {
-        edca_db.manyOrNone("select * from $1~ order by id limit $2 offset $3", [
+    if ( table != "" && !isNaN(contractingprocess_id)) {
+        edca_db.manyOrNone("select * from $1~ where contractingprocess_id = $2 order by id", [
             table,
-            limit,
-            offset
+            contractingprocess_id
         ]).then(function (data) {
             res.json({
                 status: "Ok",
@@ -257,7 +255,6 @@ router.get('/get/:path/:limit/:offset', verifyToken, function(req, res){
                 data: data
             })
         }).catch(function (error) {
-
             res.json({
                 status: "Error",
                 description: "Ha ocurrido un error",
