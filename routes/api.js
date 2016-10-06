@@ -122,9 +122,6 @@ function verifyToken(req, res, next) {
 function getTableName( path, opType ) {
     var table = "";
     switch( path ){
-        /*case "contractingprocess":
-            table = "contractingprocess";
-            break;*/
         //Documents
         case "planning-document":
             table = "planningdocuments";
@@ -188,7 +185,6 @@ function getTableName( path, opType ) {
             break;
     }
 
-
     if ( opType == "read" ){
         switch ( path ) {
             case "planning":
@@ -200,6 +196,14 @@ function getTableName( path, opType ) {
             case "award":
                 break;
             case "contract":
+                break;
+        }
+    }
+
+    if ( opType == "delete"){
+        switch ( path ){
+            case "contractingprocess":
+                table = "contractingprocess";
                 break;
         }
     }
@@ -237,6 +241,22 @@ router.get('/get/ocds/releasepackage/:id',verifyToken,function (req,res) {
             }
         });
     }
+});
+
+router.get('/getall/contractingprocess', verifyToken,  function (req, res) {
+    edca_db.manyOrNone("select * from contractingprocess order by id").then(function (data) {
+        res.json({
+            status: "Ok",
+            description : "Listado de procesos de contratación",
+            data : data
+        });
+    }).then(function (error) {
+        res.json({
+            status : "Error",
+            description: "Ha ocurrido un error",
+            data : error
+        })
+    });
 });
 
 router.get('/getall/:path/:contractingprocess_id/', verifyToken, function(req, res){
@@ -1116,7 +1136,6 @@ router.put('/new/transaction/:contractingprocess_id',verifyToken, function (req,
         })
     }
 });
-
 
 /* * * * * *
  * Delete  *
