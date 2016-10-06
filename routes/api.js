@@ -213,11 +213,11 @@ router.get('/get/ocds/releasepackage/:id',verifyToken,function (req,res) {
 
     if (!isNaN(id)) {
 
-        ocds.getOCDSJSON(id, 'release-package', edca_db).then(function (data) {
+        ocds.getOCDSJSON(id, 'release-record', edca_db).then(function (data) {
             delete data.localid;
             res.json ({
                 status : "Ok",
-                description: "Relese package",
+                description: "Release package",
                 data : data
             });
 
