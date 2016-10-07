@@ -10,7 +10,7 @@ module.exports = {
                 var planning = t.one("select * from planning where contractingprocess_id = $1", [localid]);     //1
                 var budget = t.one("select * from budget where contractingprocess_id = $1", [localid]);         //2
                 var tender = t.one("select * from tender where contractingprocess_id = $1", [localid]);        //3
-                var buyer = t.oneOrNone("select * from buyer where contractingprocess_id = $1", [localid]);    //4
+                var buyer = t.one("select * from buyer where contractingprocess_id = $1", [localid]);    //4
                 var award = t.one("select * from award where contractingprocess_id = $1", [localid]);           //5
                 var contract = t.one("select * from contract where contractingprocess_id = $1", [localid]);     //6
                 var implementation = t.oneOrNone('select * from implementation where contractingprocess_id = $1', [localid]); //7
