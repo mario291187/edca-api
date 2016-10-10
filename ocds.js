@@ -72,7 +72,7 @@ module.exports = {
 
                 function deleteNullProperties(test, recursive) {
                     for (var i in test) {
-                        if (test[i] === null || JSON.stringify(test[i]) === JSON.stringify({}) ) {
+                        if (test[i] === null || JSON.stringify(test[i]) === JSON.stringify({}) || test[i]=='' ) {
                             delete test[i];
                         } else if (recursive && typeof test[i] === 'object') {
                             deleteNullProperties(test[i], recursive);
