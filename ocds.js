@@ -474,15 +474,20 @@ module.exports = {
 
                     deleteNullProperties(publisher, true);
 
-                    return ({
-                        uri: data[0].cp.uri,//"http://datos.gob.mx/busca/organization/gacm",
-                        publishedDate: (new Date).toISOString(),//getMString(new Date()),
-                        releases : [ release ],
-                        publisher: publisher,
-                        license: data[0].cp.license,//"http://datos.gob.mx/libreusomx",
-                        publicationPolicy: data[0].cp.publicationpolicy,//"http://dof.gob.mx/nota_detalle.php?codigo=5391143&fecha=04/05/2015",
-                        localid : localid
-                    });
+
+                    var record = {};
+
+                    record.uri = data[0].cp.uri;//"http://datos.gob.mx/busca/organization/gacm",
+                    record.publishedDate = (new Date).toISOString();//getMString(new Date()),
+                    record.releases = [ release ];
+                    record.publisher = publisher;
+                    record.license = data[0].cp.license;//"http://datos.gob.mx/libreusomx",
+                    record.publicationPolicy = data[0].cp.publicationpolicy;//"http://dof.gob.mx/nota_detalle.php?codigo=5391143&fecha=04/05/2015",
+                    record.localid  = localid;
+
+                    deleteNullProperties(record, false);
+
+                    return record;
                 }
 
                 release.localid = localid;
