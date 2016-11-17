@@ -346,7 +346,7 @@ router.post("/update/contractingprocess/:id", verifyToken, function (req, res){
     // stage -> etapa en que se encuentra la contratación: 0 -> planning, 1 -> licitación, 2 -> adjudicación, 3 -> contratación, 4 -> implementación
     // Open Contracting ID (ocid)->  Es un ID global asignado al proceso de contratación, puede ser cualquier cosa
 
-    var stage = Math.abs(req.params.stage);
+    var stage = Math.abs(req.body.stage);
     var id = Math.abs(req.params.id);
 
     if ( !isNaN( id ) && !isNaN( stage ) && stage <= 4){
