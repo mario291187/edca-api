@@ -397,17 +397,11 @@ router.post('/update/planning/:contractingprocess_id',verifyToken, function (req
                     id //id del proceso
                 ])
             ]).then(function (data) {
-
-                var planning = {
-                    id: data[0].id,
-                    contractingprocess_id: data[0].contractingprocess_id
-                };
-
                 //budget
                 return t.batch([
-                    planning,
+                    //planning,
                     t.one("update budget set budget_source = $2, budget_budgetid =$3, budget_description= $4, budget_amount=$5, budget_currency=$6, budget_project=$7, budget_projectid=$8, budget_uri=$9" +
-                        " where ContractingProcess_id=$1 returning id", [
+                        " where ContractingProcess_id=$1 returning id as planning_id, contractingprocess_id", [
                         data[0].contractingprocess_id, // id del proceso de contratación
                         req.body.budget_source,
                         req.body.budget_budgetid,
