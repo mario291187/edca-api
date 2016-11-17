@@ -399,8 +399,8 @@ router.post('/update/planning/:contractingprocess_id',verifyToken, function (req
             ]).then(function (data) {
 
                 var planning = {
-                    id: data.id,
-                    contractingprocess_id: data.contractingprocess_id
+                    id: data[0].id,
+                    contractingprocess_id: data[0].contractingprocess_id
                 };
 
                 //budget
@@ -408,7 +408,7 @@ router.post('/update/planning/:contractingprocess_id',verifyToken, function (req
                     planning,
                     t.one("update budget set budget_source = $2, budget_budgetid =$3, budget_description= $4, budget_amount=$5, budget_currency=$6, budget_project=$7, budget_projectid=$8, budget_uri=$9" +
                         " where ContractingProcess_id=$1 returning id", [
-                        data.contractingprocess_id, // id del proceso de contratación
+                        data[0].contractingprocess_id, // id del proceso de contratación
                         req.body.budget_source,
                         req.body.budget_budgetid,
                         req.body.budget_description,
@@ -422,13 +422,13 @@ router.post('/update/planning/:contractingprocess_id',verifyToken, function (req
             });
 
         }).then(function (data) {
-            res.json({
+            res.status(200).json({
                 status: "Ok",
                 description: "Los datos han sido actualizados",
                 data: data
             });
         }).catch(function (error) {
-            res.json({
+            res.status(400).json({
                 status: "Error",
                 description: "Ha ocurrido un error",
                 data: error
