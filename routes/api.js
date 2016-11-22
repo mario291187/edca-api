@@ -1128,6 +1128,93 @@ router.put('/new/:path/document/:contractingprocess_id',verifyToken, function (r
     }
 });
 
+// Documents
+router.put('/new/:path/many-documents/:contractingprocess_id',verifyToken, function (req, res){
+    //path -> planning, tender, award, contract, implementation, tender/milestone, implementation/milestone
+
+    var table = "";
+    var contractingprocess_id = Math.abs(req.params.contractingprocess_id);
+
+    switch( req.params.path ){
+        case "planning":
+            table = "planningdocuments";
+            break;
+        case "tender":
+            table = "tenderdocuments";
+            break;
+        case "award":
+            table = "awarddocuments";
+            break;
+        case "contract":
+            table = "contractdocuments";
+            break;
+        case "implementation":
+            table = "implementationdocuments";
+            break;
+        /*
+         case "tender-milestone":
+         table = "tendermilestonedocuments";
+         break;
+         case "implementation-milestone":
+         table = "implementationmilestonedocuments";
+         break;
+         */
+    }
+
+    if ( table != "" && !isNaN(contractingprocess_id) && req.body.documents.length > 0 ){
+
+        edca_db.tx(function (t) {
+
+            var document_queries=[];
+            for ( var i=0; i < req.body.documents.length; i++ ){
+
+                document_queries.push( this.db.one('insert into $1~ (contractingprocess_id, document_type, documentid, title, description, url, date_published, date_modified, format, language) ' +
+                    'values ($2,$3,$4,$5,$6,$7,$8,$9,$10,$11) ' +
+                    'returning id as document_id, contractingprocess_id',
+                    [
+                        table, //tabla donde se inserta el documento, opciones: planningdocuments, tenderdocuments, awarddocuments, contractdocuments ...
+                        contractingprocess_id, // id del proceso de contratación
+                        req.body.document_type,
+                        "doc-"+(new Date().getTime()),//req.body.documentid, //id del ducumento, puede ser cualquier cosa
+                        req.body.title,
+                        req.body.description,
+                        req.body.url,
+                        dateCol(req.body.date_published ),
+                        dateCol(req.body.date_modified),
+                        req.body.format,
+                        req.body.language // lenguaje del documento en código de dos letras
+                    ])
+                );
+            }
+
+            return this.batch( document_queries );
+
+        }).then(function (documents) {
+            res.json({
+                status: "Ok",
+                description: "Se ha registrado un bloque de documentos",
+                data: documents
+            });
+
+        }).catch(function(error){
+            res.status(400).json({
+                status: "Error",
+                description: "Ha ocurrido un error",
+                data: error
+            });
+        });
+
+    }else{
+        res.status(400).json({
+            status: "Error",
+            description: "Ha ocurrido un error",
+            data: {
+                message : "Parámetros incorrectos"
+            }
+        });
+    }
+});
+
 
 // Implementation -> Transactions
 router.put('/new/transaction/:contractingprocess_id',verifyToken, function (req, res){
