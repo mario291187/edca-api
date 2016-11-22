@@ -850,7 +850,7 @@ router.put('/new/contractingprocess',verifyToken, function(req, res){
 // Items
 router.put('/new/:path/item/:contractingprocess_id',verifyToken, function (req, res){
 
-    var contractingprocess_id = Math.abs(req.params.contractigprocess_id);
+    var contractingprocess_id = Math.abs(req.params.contractingprocess_id);
     // path -> tender, award, contract
     var table ="";
     switch ( req.params.path ){
@@ -905,6 +905,79 @@ router.put('/new/:path/item/:contractingprocess_id',verifyToken, function (req, 
         })
     }
 });
+
+router.put('/new/:path/many-items/:contractingprocess_id',verifyToken, function (req, res){
+
+    var contractingprocess_id = Math.abs(req.params.contractingprocess_id);
+    // path -> tender, award, contract
+    var table ="";
+    switch ( req.params.path ){
+        case "tender":
+            table = "tenderitem";
+            break;
+        case "award":
+            table = "awarditem";
+            break;
+        case "contract":
+            table = "contractitem";
+            break;
+    }
+
+    if ( table != "" && !isNaN(contractingprocess_id) && req.body.items.length > 0 ) {
+
+        edca_db.tx(function (t) {
+
+            var item_queries = [];
+
+            for (var i =0; i < req.body.items.length ; i++){
+                item_queries.push(
+                    this.one('insert into $1~ (contractingprocess_id, itemid, description, classification_scheme, classification_id, classification_description, classification_uri,' +
+                        ' quantity, unit_name, unit_value_amount, unit_value_currency) values ($2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) returning id', [
+                        table, // tabla donde se inserta el item, opciones -> tenderitems, awarditems, ...
+                        contractingprocess_id, // id del proceso de contratación
+                        "item-"+(new Date().getTime()),//req.body.itemid, //id del item, puede ser cualquier cosa
+                        req.body.items[i].description,
+                        req.body.items[i].classification_scheme,
+                        req.body.items[i].classification_id,
+                        req.body.items[i].classification_description,
+                        req.body.items[i].classification_uri,
+                        numericCol(req.body.items[i].quantity),
+                        req.body.items[i].unit_name,
+                        numericCol(req.body.items[i].unit_value_amount),
+                        req.body.items[i].unit_value_currency
+                    ])
+                );
+            }
+            return this.batch( item_queries );
+        }).then(function(items){
+            res.json({
+                status: "Ok",
+                description: "Se ha registrado un bloque de artículos",
+                data: items
+            });
+
+        }).catch(function (error) {
+            console.log(error);
+            res.json({
+                status: "Error",
+                description: "Ha ocurrido un error",
+                data: error
+            });
+        });
+
+    }else {
+        res.status(400).json({
+            status : "Error",
+            description : "Ha ocurrido un error",
+            data :{
+                message: "Parámetros incorrectos"
+            }
+        })
+    }
+});
+
+
+
 
 // Amendment changes
 router.put('/new/:path/amendmentchange/:contractingprocess_id',verifyToken, function (req, res){
