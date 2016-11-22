@@ -1161,6 +1161,8 @@ router.put('/new/:path/many-documents/:contractingprocess_id',verifyToken, funct
          */
     }
 
+    //console.log(req.body.documents.length);
+
     if ( table != "" && !isNaN(contractingprocess_id) && req.body.documents.length > 0 ){
 
         edca_db.tx(function (t) {
@@ -1168,21 +1170,21 @@ router.put('/new/:path/many-documents/:contractingprocess_id',verifyToken, funct
             var document_queries=[];
             for ( var i=0; i < req.body.documents.length; i++ ){
 
-                document_queries.push( this.db.one('insert into $1~ (contractingprocess_id, document_type, documentid, title, description, url, date_published, date_modified, format, language) ' +
+                document_queries.push( this.one('insert into $1~ (contractingprocess_id, document_type, documentid, title, description, url, date_published, date_modified, format, language) ' +
                     'values ($2,$3,$4,$5,$6,$7,$8,$9,$10,$11) ' +
                     'returning id as document_id, contractingprocess_id',
                     [
                         table, //tabla donde se inserta el documento, opciones: planningdocuments, tenderdocuments, awarddocuments, contractdocuments ...
                         contractingprocess_id, // id del proceso de contratación
-                        req.body.document_type,
+                        req.body.documents[i].document_type,
                         "doc-"+(new Date().getTime()),//req.body.documentid, //id del ducumento, puede ser cualquier cosa
-                        req.body.title,
-                        req.body.description,
-                        req.body.url,
-                        dateCol(req.body.date_published ),
-                        dateCol(req.body.date_modified),
-                        req.body.format,
-                        req.body.language // lenguaje del documento en código de dos letras
+                        req.body.documents[i].title,
+                        req.body.documents[i].description,
+                        req.body.documents[i].url,
+                        dateCol(req.body.documents[i].date_published ),
+                        dateCol(req.body.documents[i].date_modified),
+                        req.body.documents[i].format,
+                        req.body.documents[i].language // lenguaje del documento en código de dos letras
                     ])
                 );
             }
