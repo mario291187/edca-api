@@ -1128,6 +1128,69 @@ router.put("/new/:path/milestone/:contractingprocess_id",verifyToken, function (
     }
 });
 
+//milestones -> hitos
+router.put("/new/:path/many-milestones/:contractingprocess_id",verifyToken, function (req, res) {
+    //stage -> tender, implementation
+
+    var table = "";
+    switch( req.params.path ){
+        case "tender":
+            table = "tendermilestone";
+            break;
+        case "implementation":
+            table = "implementationmilestone";
+            break;
+    }
+
+    var contractingprocess_id = Math.abs( req.params.contractingprocess_id);
+
+    if ( table != "" && !isNaN(contractingprocess_id) && req.body.milestones.length > 0 ) {
+
+        edca_db.tx(function (t) {
+            var milestone_queries = [];
+
+            for (var i = 0 ; i< req.body.milestones.length; i++){
+                milestone_queries.push( this.one('insert into $1~ (contractingprocess_id, milestoneid, title, description, duedate, date_modified, status) values ($2,$3,$4,$5,$6,$7,$8) ' +
+                    'returning id as milestone_id, contractingprocess_id', [
+                        table, // tabla donde se registra el hito
+                        contractingprocess_id, // id del proceso de contratación
+                        "milestone-"+(new Date().getTime()),//req.body.milestoneid, //id del hito, puede ser cualquier cosa
+                        req.body.milestones[i].title,
+                        req.body.milestones[i].description,
+                        dateCol(req.body.milestones[i].duedate),
+                        dateCol(req.body.milestones[i].date_modified),
+                        req.body.milestones[i].status
+                    ])
+                );
+            }
+
+            return this.batch( milestone_queries );
+
+        }).then(function (milestones) {
+            res.json({
+                status: "Ok",
+                description: "Se ha registrado un bloque de hitos",
+                data: milestones
+            });
+        }).catch(function (error) {
+            res.json({
+                status: "Error",
+                description: "Ha ocurrido un error",
+                data: error
+            });
+        });
+
+    }else {
+        res.status(400).json({
+            status: "Error",
+            description :"Ha ocurrido un error",
+            data :{
+                message: "Parámetros incorrectos"
+            }
+        });
+    }
+});
+
 
 // Documents
 router.put('/new/:path/document/:contractingprocess_id',verifyToken, function (req, res){
