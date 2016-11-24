@@ -1173,6 +1173,7 @@ router.put("/new/:path/many-milestones/:contractingprocess_id",verifyToken, func
                 data: milestones
             });
         }).catch(function (error) {
+            console.log(error);
             res.json({
                 status: "Error",
                 description: "Ha ocurrido un error",
@@ -1335,6 +1336,7 @@ router.put('/new/:path/many-documents/:contractingprocess_id',verifyToken, funct
             });
 
         }).catch(function(error){
+            console.log(error);
             res.status(400).json({
                 status: "Error",
                 description: "Ha ocurrido un error",
