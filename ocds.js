@@ -463,7 +463,7 @@ module.exports = {
 
                 release.language = 'es';
 
-                if (type =="release-record"){
+                if (type =="release-package"){
 
                     var publisher = {
                         name: data[3].name,
