@@ -298,12 +298,46 @@ module.exports = {
                 if(checkValue(data[0].tender.value_amount)){release.tender.value.amount = Number (data[0].tender.value_amount);}
                 if(checkValue(data[0].tender.value_currency)){release.tender.value.currency = data[0].tender.value_currency;}
 
-                if(checkValue(data[0].tender.procurementmenthod)){release.tender.procurementMethod = data[0].tender.procurementmenthod;}
-                if(checkValue(data[0].tender.procurementMethod_rationale)){release.tender.procurementMethodRationale = data[0].tender.procurementMethod_rationale;}
+
+                function pm ( method ) {
+
+                    var proc ='';
+
+                    switch (method){
+
+                        case 'Licitación pública':
+                            proc = 'open';
+                            break;
+                        case 'Invitación a tres':
+                            proc = 'selective';
+                            break;
+                        case 'Adjudicación directa':
+                            proc = 'limited';
+                            break;
+                        case 'Contrataciones ASA':
+                            proc= 'open';
+                            break;
+                        case 'Convenio de colaboración':
+                            proc= 'open';
+                            break;
+                    }
+
+                    return proc;
+
+                }
+
+                if(checkValue(data[0].tender.procurementmethod)){release.tender.procurementMethod = pm(data[0].tender.procurementmethod);}
+                if(checkValue(data[0].tender.procurementmethod_rationale)){release.tender.procurementMethodRationale = data[0].tender.procurementmethod_rationale;}
+
+                //metodo de adquisición
+                if(checkValue(data[0].tender.procurementmethod)){release.tender.metodoDeAdquisicion = data[0].tender.procurementmethod;}
+
                 if(checkValue(data[0].tender.awardcriteria)){release.tender.awardCriteria = data[0].tender.awardcriteria;}
                 if(checkValue(data[0].tender.awardcriteria_details)){release.tender.awardCriteriaDetails = data[0].tender.awardcriteria_details;}
-                if(checkValue(data[0].tender.submissionMethod)){release.tender.submissionMethod = data[0].tender.submissionMethod;}
-                if(checkValue(data[0].tender.submissionMethod_details)){release.tender.submissionMethodDetails = data[0].tender.submissionMethod_details;}
+
+                //submission method (Falta homologar)
+                if(checkValue(data[0].tender.submissionmethod)){release.tender.submissionMethod = [ data[0].tender.submissionmethod ];}
+                if(checkValue(data[0].tender.submissionmethod_details)){release.tender.submissionMethodDetails = data[0].tender.submissionmethod_details;}
 
                 release.tender.tenderPeriod = { };
                 if(checkValue(data[0].tender.tenderperiod_startdate)){release.tender.tenderPeriod.startDate = dateString(data[0].tender.tenderperiod_startdate);}
