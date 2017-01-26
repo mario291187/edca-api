@@ -358,6 +358,7 @@ router.post("/update/contractingprocess/:id", verifyToken, function (req, res){
             req.body.license,
             req.body.publicationpolicy,
             req.body.destino,
+            //req.body.description
             id // id del proceso de contratación
         ]).then(function (data) {
             res.json({
@@ -793,6 +794,7 @@ router.put('/new/contractingprocess',verifyToken, function(req, res){
                 req.body.license,
                 req.body.publicationpolicy,
                 req.body.destino
+                //req.body.description
             ]).then(function (process) {
 
                 return t.batch([
