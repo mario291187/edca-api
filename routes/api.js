@@ -351,12 +351,13 @@ router.post("/update/contractingprocess/:id", verifyToken, function (req, res){
 
     if ( !isNaN( id ) && !isNaN( stage ) && stage <= 4){
 
-        edca_db.one("update contractingprocess set ocid = $1, stage = $2, uri=$3, license=$4, publicationpolicy=$5 where id = $6 returning id, ocid, stage", [
+        edca_db.one("update contractingprocess set ocid = $1, stage = $2, uri=$3, license=$4, publicationpolicy=$5, destino=$6 where id = $7 returning id, ocid, stage", [
             req.body.ocid,
             stage,
             req.body.uri,
             req.body.license,
             req.body.publicationpolicy,
+            req.body.destino,
             id // id del proceso de contratación
         ]).then(function (data) {
             res.json({
@@ -783,14 +784,15 @@ router.put('/new/contractingprocess',verifyToken, function(req, res){
 
         edca_db.tx(function (t) {
 
-            return t.one("insert into ContractingProcess (fecha_creacion, hora_creacion, ocid, stage, uri, license, publicationpolicy ) values " +
-                "(current_date, current_time,  $1, $2, $3, $4, $5)" +
+            return t.one("insert into ContractingProcess (fecha_creacion, hora_creacion, ocid, stage, uri, license, publicationpolicy, destino ) values " +
+                "(current_date, current_time,  $1, $2, $3, $4, $5, $6)" +
                 " returning id", [
                 ocid,
                 stage,
                 req.body.uri,
                 req.body.license,
-                req.body.publicationpolicy
+                req.body.publicationpolicy,
+                req.body.destino
             ]).then(function (process) {
 
                 return t.batch([
