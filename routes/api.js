@@ -1198,7 +1198,7 @@ router.put("/new/:path/many-milestones/:contractingprocess_id",verifyToken, func
 
 
 // Documents
-router.put('/new/:path/document/:contractingprocess_id',/*verifyToken,*/ function (req, res){
+router.put('/new/:path/document/:contractingprocess_id',verifyToken, function (req, res){
     //path -> planning, tender, award, contract, implementation, tender/milestone, implementation/milestone
 
     var table = "";
