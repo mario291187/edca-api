@@ -23,8 +23,7 @@ if ( typeof process.env.EDCA_DB != "undefined" ){
     edca_db = pgp("postgres://tester:test@localhost/edca");
 }
 
-
-var uuid = require('node-uuid');
+const uuid = require('uuid/v4');
 
 /* * *
  * Authenticate
@@ -875,7 +874,7 @@ router.put('/new/:path/item/:contractingprocess_id',verifyToken, function (req, 
             ' quantity, unit_name, unit_value_amount, unit_value_currency) values ($2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) returning id', [
             table, // tabla donde se inserta el item, opciones -> tenderitems, awarditems, ...
             contractingprocess_id, // id del proceso de contratación
-            "item-"+uuid.v4()/*(new Date().getTime())*/,//req.body.itemid, //id del item, puede ser cualquier cosa
+            "item-"+uuid()/*(new Date().getTime())*/,//req.body.itemid, //id del item, puede ser cualquier cosa
             req.body.description,
             req.body.classification_scheme,
             req.body.classification_id,
@@ -939,7 +938,7 @@ router.put('/new/:path/many-items/:contractingprocess_id',verifyToken, function 
                         ' quantity, unit_name, unit_value_amount, unit_value_currency) values ($2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) returning id', [
                         table, // tabla donde se inserta el item, opciones -> tenderitems, awarditems, ...
                         contractingprocess_id, // id del proceso de contratación
-                        "item-"+uuid.v4()/*(new Date().getTime())*/,//req.body.itemid, //id del item, puede ser cualquier cosa
+                        "item-"+uuid()/*(new Date().getTime())*/,//req.body.itemid, //id del item, puede ser cualquier cosa
                         req.body.items[i].description,
                         req.body.items[i].classification_scheme,
                         req.body.items[i].classification_id,
@@ -1102,7 +1101,7 @@ router.put("/new/:path/milestone/:contractingprocess_id",verifyToken, function (
         edca_db.one('insert into $1~ (contractingprocess_id, milestoneid, title, description, duedate, date_modified, status) values ($2,$3,$4,$5,$6,$7,$8) returning id', [
             table, // tabla donde se registra el hito
             contractingprocess_id, // id del proceso de contratación
-            "milestone-"+uuid.v4()/*(new Date().getTime())*/,//req.body.milestoneid, //id del hito, puede ser cualquier cosa
+            "milestone-"+uuid()/*(new Date().getTime())*/,//req.body.milestoneid, //id del hito, puede ser cualquier cosa
             req.body.title,
             req.body.description,
             dateCol(req.body.duedate),
@@ -1158,7 +1157,7 @@ router.put("/new/:path/many-milestones/:contractingprocess_id",verifyToken, func
                     'returning id as milestone_id, contractingprocess_id', [
                         table, // tabla donde se registra el hito
                         contractingprocess_id, // id del proceso de contratación
-                        "milestone-"+uuid.v4()/*(new Date().getTime())*/,//req.body.milestoneid, //id del hito, puede ser cualquier cosa
+                        "milestone-"+uuid()/*(new Date().getTime())*/,//req.body.milestoneid, //id del hito, puede ser cualquier cosa
                         req.body.milestones[i].title,
                         req.body.milestones[i].description,
                         dateCol(req.body.milestones[i].duedate),
@@ -1237,7 +1236,7 @@ router.put('/new/:path/document/:contractingprocess_id',verifyToken, function (r
                 table, //tabla donde se inserta el documento, opciones: planningdocuments, tenderdocuments, awarddocuments, contractdocuments ...
                 contractingprocess_id, // id del proceso de contratación
                 req.body.document_type,
-                "doc-"+uuid.v4()/*(new Date().getTime())*/,//req.body.documentid, //id del ducumento, puede ser cualquier cosa
+                "doc-"+uuid()/*(new Date().getTime())*/,//req.body.documentid, //id del ducumento, puede ser cualquier cosa
                 req.body.title,
                 req.body.description,
                 req.body.url,
@@ -1318,7 +1317,7 @@ router.put('/new/:path/many-documents/:contractingprocess_id',verifyToken, funct
                         table, //tabla donde se inserta el documento, opciones: planningdocuments, tenderdocuments, awarddocuments, contractdocuments ...
                         contractingprocess_id, // id del proceso de contratación
                         req.body.documents[i].document_type,
-                        "doc-"+uuid.v4()/*(new Date().getTime())*/,//req.body.documentid, //id del ducumento, puede ser cualquier cosa
+                        "doc-"+uuid()/*(new Date().getTime())*/,//req.body.documentid, //id del ducumento, puede ser cualquier cosa
                         req.body.documents[i].title,
                         req.body.documents[i].description,
                         req.body.documents[i].url,
@@ -1371,7 +1370,7 @@ router.put('/new/transaction/:contractingprocess_id',verifyToken, function (req,
             'receiverorganization_scheme,receiverorganization_id,receiverorganization_legalname,receiverorganization_uri, uri) ' +
             'values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) returning id', [
             contractingprocess_id, // id del proceso de contratación
-            "transaction-" + uuid.v4()/* (new Date().getTime())*/,//req.body.transactionid,
+            "transaction-" + uuid()/* (new Date().getTime())*/,//req.body.transactionid,
             req.body.source,
             dateCol(req.body.implementation_date ),
             numericCol(req.body.value_amount),
