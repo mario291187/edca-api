@@ -1448,4 +1448,37 @@ router.delete('/delete/:path/:id',verifyToken,function (req, res ) {
     }
 });
 
+router.delete('/delete/all/:path/:contractingprocess_id',verifyToken,function (req, res ) {
+
+   var table = getTableName( req.params.path, 'delete' );
+   var id = Math.abs(req.params.contractingprocess_id);
+
+   if (table != "" && !isNaN( id )) {
+       edca_db.manyOrNone('delete from $1~ cascade where contractingprocess_id = $2 returning id', [
+           table,
+           id
+       ]).then(function (data) {
+           res.json({
+               status: "Ok",
+               description: "Objetos eliminado",
+               data: data
+           });
+       }).catch(function (data) {
+           res.json({
+               status: 'Error',
+               description: "Ha ocurrido un error",
+               data: data
+           })
+       });
+   }else {
+       res.status(400).json({
+           status : "Error",
+           description: "Ha ocurrido un error",
+           data : {
+               message : "Proporcione correctamente la descripción del elemento que desea eliminar, e.g., 'contract-amendment-change'"
+           }
+       });
+   }
+});
+
 module.exports = router;
