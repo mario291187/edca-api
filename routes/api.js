@@ -1,29 +1,9 @@
 var express = require('express');
 var app = express();
 var router = express.Router();
-var pgp = require ('pg-promise')();
-
-var bCrypt = require('bcrypt-nodejs');
-
-/* index */
-router.get('/', function(req, res, next) {
-    res.json({
-        message: "Bienvenido al API de la plataforma de contrataciones abiertas EDCA-MX."
-    });
-});
-
-var edca_db;
-
-if ( typeof process.env.EDCA_DB != "undefined" ){
-    console.log("EDCA_DB: ", process.env.EDCA_DB);
-    edca_db = pgp( process.env.EDCA_DB );
-} else {
-    console.log("Warning: EDCA_DB env variable is not set\n " +
-        " defaulting to -> postgres://tester:test@localhost/edca");
-    edca_db = pgp("postgres://tester:test@localhost/edca");
-}
-
+var db_conf = require('../db_conf');
 const uuid = require('uuid/v4');
+var bCrypt = require('bcrypt-nodejs');
 
 /* * *
  * Authenticate
@@ -40,6 +20,14 @@ app.set('superSecret', config.secret);
 var isValidPassword = function(user, password){
     return bCrypt.compareSync(password, user.password);
 };
+
+
+// index
+router.get('/', function(req, res, next) {
+    res.json({
+        message: "Bienvenido al API de la plataforma de contrataciones abiertas EDCA-MX."
+    });
+});
 
 router.post('/authenticate', function( req, res ){
 
@@ -243,7 +231,7 @@ router.get('/get/ocds/releasepackage/:id',verifyToken,function (req,res) {
 });
 
 router.get('/getall/contractingprocess', verifyToken,  function (req, res) {
-    edca_db.manyOrNone("select * from contractingprocess order by id").then(function (data) {
+    db_conf.edca_db.manyOrNone("select * from contractingprocess order by id").then(function (data) {
         res.json({
             status: "Ok",
             description : "Listado de procesos de contratación",
@@ -264,7 +252,7 @@ router.get('/getall/:path/:contractingprocess_id/', verifyToken, function(req, r
     var contractingprocess_id = Math.abs(req.params.contractingprocess_id);
 
     if ( table != "" && !isNaN(contractingprocess_id)) {
-        edca_db.manyOrNone("select * from $1~ where contractingprocess_id = $2 order by id", [
+        db_conf.edca_db.manyOrNone("select * from $1~ where contractingprocess_id = $2 order by id", [
             table,
             contractingprocess_id
         ]).then(function (data) {
@@ -299,7 +287,7 @@ router.get('/getbyid/:path/:id', verifyToken ,function(req, res){
 
     if ( table != "" && !isNaN( id )){
 
-        edca_db.oneOrNone("select * from $1~ where id = $2", [
+        db_conf.edca_db.oneOrNone("select * from $1~ where id = $2", [
             table,
             id
         ]).then(function (data) {
@@ -350,7 +338,7 @@ router.post("/update/contractingprocess/:id", verifyToken, function (req, res){
 
     if ( !isNaN( id ) && !isNaN( stage ) && stage <= 4){
 
-        edca_db.one("update contractingprocess set ocid = $1, stage = $2, uri=$3, license=$4, publicationpolicy=$5, destino=$6 where id = $7 returning id, ocid, stage", [
+        db_conf.edca_db.one("update contractingprocess set ocid = $1, stage = $2, uri=$3, license=$4, publicationpolicy=$5, destino=$6 where id = $7 returning id, ocid, stage", [
             req.body.ocid,
             stage,
             req.body.uri,
@@ -389,7 +377,7 @@ router.post('/update/planning/:contractingprocess_id',verifyToken, function (req
     var id = Math.abs( req.params.contractingprocess_id );
 
     if (!isNaN( id )) {
-        edca_db.tx(function (t) {
+        db_conf.edca_db.tx(function (t) {
 
             return this.batch([
                 //planning
@@ -445,7 +433,7 @@ router.post('/update/buyer/:contractingprocess_id',verifyToken, function (req, r
     var id = Math.abs( req.params.contractingprocess_id );
     if ( !isNaN(id) ) {
 
-        edca_db.one("update buyer set identifier_scheme= $2, identifier_id =$3, identifier_legalname=$4, identifier_uri=$5, name = $6, address_streetaddress=$7," +
+        db_conf.edca_db.one("update buyer set identifier_scheme= $2, identifier_id =$3, identifier_legalname=$4, identifier_uri=$5, name = $6, address_streetaddress=$7," +
             " address_locality=$8, address_region =$9, address_postalcode=$10, address_countryname=$11, contactpoint_name=$12, contactpoint_email=$13, contactpoint_telephone=$14," +
             " contactpoint_faxnumber=$15, contactpoint_url=$16 where contractingprocess_id = $1 returning id, contractingprocess_id", [
             id, // id del proceso
@@ -492,7 +480,7 @@ router.post('/update/procuringentity/:contractingprocess_id',verifyToken, functi
     var id = Math.abs( req.params.contractingprocess_id );
     if ( !isNaN(id) ) {
 
-        edca_db.one("update procuringentity set identifier_scheme= $2, identifier_id =$3, identifier_legalname=$4, identifier_uri=$5, name = $6, address_streetaddress=$7," +
+        db_conf.edca_db.one("update procuringentity set identifier_scheme= $2, identifier_id =$3, identifier_legalname=$4, identifier_uri=$5, name = $6, address_streetaddress=$7," +
             " address_locality=$8, address_region =$9, address_postalcode=$10, address_countryname=$11, contactpoint_name=$12, contactpoint_email=$13, contactpoint_telephone=$14," +
             " contactpoint_faxnumber=$15, contactpoint_url=$16 where contractingprocess_id = $1 returning id, contractingprocess_id", [
             id, // id del proceso
@@ -541,7 +529,7 @@ router.post('/update/organization/:type/:id',verifyToken, function (req, res){
     var id = Math.abs( req.params.id );
     if ( ( req.params.type == "tenderer" || req.params.type == "supplier") && !isNaN(id) ) {
 
-        edca_db.one("update $1~ set identifier_scheme= $3, identifier_id =$4, identifier_legalname=$5, identifier_uri=$6, name = $7, address_streetaddress=$8," +
+        db_conf.edca_db.one("update $1~ set identifier_scheme= $3, identifier_id =$4, identifier_legalname=$5, identifier_uri=$6, name = $7, address_streetaddress=$8," +
             " address_locality=$9, address_region =$10, address_postalcode=$11, address_countryname=$12, contactpoint_name=$13, contactpoint_email=$14, contactpoint_telephone=$15," +
             " contactpoint_faxnumber=$16, contactpoint_url=$17 where id = $2 returning id", [
             req.params.type, //  tabla donde se inserta el registro, opciones -> buyer, tendererer, supplier
@@ -590,7 +578,7 @@ router.post('/update/tender/:contractingprocess_id',verifyToken, function (req, 
     var id = Math.abs(req.params.contractingprocess_id);
 
     if (!isNaN(id)) {
-        edca_db.one("update tender set tenderid =$2, title= $3, description=$4, status=$5, minvalue_amount=$6, minvalue_currency=$7, value_amount=$8, value_currency=$9, procurementmethod=$10," +
+        db_conf.edca_db.one("update tender set tenderid =$2, title= $3, description=$4, status=$5, minvalue_amount=$6, minvalue_currency=$7, value_amount=$8, value_currency=$9, procurementmethod=$10," +
             "procurementmethod_rationale=$11, awardcriteria=$12, awardcriteria_details=$13, submissionmethod=$14, submissionmethod_details=$15," +
             "tenderperiod_startdate=$16, tenderperiod_enddate=$17, enquiryperiod_startdate=$18, enquiryperiod_enddate=$19 ,hasenquiries=$20, eligibilitycriteria=$21, awardperiod_startdate=$22," +
             "awardperiod_enddate=$23, numberoftenderers=$24, amendment_date=$25, amendment_rationale=$26" +
@@ -651,7 +639,7 @@ router.post('/update/award/:contractingprocess_id',verifyToken, function (req, r
     var id = Math.abs( req.params.contractingprocess_id );
 
     if (!isNaN(id )) {
-        edca_db.one("update award set awardid=$2, title= $3, description=$4,status=$5,award_date=$6,value_amount=$7,value_currency=$8,contractperiod_startdate=$9," +
+        db_conf.edca_db.one("update award set awardid=$2, title= $3, description=$4,status=$5,award_date=$6,value_amount=$7,value_currency=$8,contractperiod_startdate=$9," +
             "contractperiod_enddate=$10, amendment_date=$11, amendment_rationale=$12 " +
             " where contractingprocess_id = $1 returning id", [
             id, // id de adjudicación asignado por el sistema
@@ -695,7 +683,7 @@ router.post('/update/contract/:contractingprocess_id',verifyToken, function (req
     var id = Math.abs( req.params.contractingprocess_id );
 
     if ( !isNaN(id) ) {
-        edca_db.one("update contract set contractid=$2, awardid=$3, title=$4, description=$5, status=$6, period_startdate=$7, period_enddate=$8, value_amount=$9, value_currency=$10," +
+        db_conf.edca_db.one("update contract set contractid=$2, awardid=$3, title=$4, description=$5, status=$6, period_startdate=$7, period_enddate=$8, value_amount=$9, value_currency=$10," +
             " datesigned=$11, amendment_date=$12, amendment_rationale=$13 " +
             " where contractingprocess_id = $1 returning id", [
             id, // id del proceso de contratación
@@ -740,7 +728,7 @@ router.post('/update/publisher/:contractingprocess_id',verifyToken, function (re
     var id = Math.abs( req.params.contractingprocess_id );
 
     if ( !isNaN(id )) {
-        edca_db.one("update publisher set name=$2, scheme=$3, uid=$4, uri=$5 where contractingprocess_id = $1 returning ContractingProcess_id, id as publisher_id, name, scheme, uid, uri", [
+        db_conf.edca_db.one("update publisher set name=$2, scheme=$3, uid=$4, uri=$5 where contractingprocess_id = $1 returning ContractingProcess_id, id as publisher_id, name, scheme, uid, uri", [
             id, //id del proceso
             req.body.name,
             req.body.scheme,
@@ -782,7 +770,7 @@ router.put('/new/contractingprocess',verifyToken, function(req, res){
 
     if ( ocid !="" && !isNaN(stage) && stage <= 4) {
 
-        edca_db.tx(function (t) {
+        db_conf.edca_db.tx(function (t) {
 
             return t.one("insert into ContractingProcess (fecha_creacion, hora_creacion, ocid, stage, uri, license, publicationpolicy, destino ) values " +
                 "(current_date, current_time,  $1, $2, $3, $4, $5, $6)" +
@@ -870,7 +858,7 @@ router.put('/new/:path/item/:contractingprocess_id',verifyToken, function (req, 
 
     if ( table != "" && !isNaN(contractingprocess_id) ) {
 
-        edca_db.one('insert into $1~ (contractingprocess_id, itemid, description, classification_scheme, classification_id, classification_description, classification_uri,' +
+        db_conf.edca_db.one('insert into $1~ (contractingprocess_id, itemid, description, classification_scheme, classification_id, classification_description, classification_uri,' +
             ' quantity, unit_name, unit_value_amount, unit_value_currency) values ($2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) returning id', [
             table, // tabla donde se inserta el item, opciones -> tenderitems, awarditems, ...
             contractingprocess_id, // id del proceso de contratación
@@ -928,7 +916,7 @@ router.put('/new/:path/many-items/:contractingprocess_id',verifyToken, function 
 
     if ( table != "" && !isNaN(contractingprocess_id) && req.body.items.length > 0 ) {
 
-        edca_db.tx(function (t) {
+        db_conf.edca_db.tx(function (t) {
 
             var item_queries = [];
 
@@ -1001,7 +989,7 @@ router.put('/new/:path/amendmentchange/:contractingprocess_id',verifyToken, func
     }
 
     if ( table != "" && !isNaN(contractingprocess_id)) {
-        edca_db.one('insert into $1~ (contractingprocess_id, property, former_value) values ($2,$3,$4) returning contractingprocess_id, id as amendmentchange_id', [
+        db_conf.edca_db.one('insert into $1~ (contractingprocess_id, property, former_value) values ($2,$3,$4) returning contractingprocess_id, id as amendmentchange_id', [
             table, //tabla donde se inserta el cambio
             contractingprocess_id, // id del proceso de contratación
             req.body.property,
@@ -1037,7 +1025,7 @@ router.put('/new/organization/:type/:contractingprocess_id',verifyToken, functio
 
     if ((req.params.type == "supplier" || req.params.type == "tenderer") && !isNaN(contractingprocess_id)){
 
-        edca_db.one("insert into $17~" +
+        db_conf.edca_db.one("insert into $17~" +
             " (contractingprocess_id, identifier_scheme, identifier_id, identifier_legalname, identifier_uri, name, address_streetaddress," +
             " address_locality, address_region, address_postalcode, address_countryname, contactpoint_name, contactpoint_email, contactpoint_telephone," +
             " contactpoint_faxnumber, contactpoint_url) values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) returning id", [
@@ -1098,7 +1086,7 @@ router.put("/new/:path/milestone/:contractingprocess_id",verifyToken, function (
 
     var contractingprocess_id = Math.abs( req.params.contractingprocess_id);
     if ( table != "" && !isNaN(contractingprocess_id) ) {
-        edca_db.one('insert into $1~ (contractingprocess_id, milestoneid, title, description, duedate, date_modified, status) values ($2,$3,$4,$5,$6,$7,$8) returning id', [
+        db_conf.edca_db.one('insert into $1~ (contractingprocess_id, milestoneid, title, description, duedate, date_modified, status) values ($2,$3,$4,$5,$6,$7,$8) returning id', [
             table, // tabla donde se registra el hito
             contractingprocess_id, // id del proceso de contratación
             "milestone-"+uuid()/*(new Date().getTime())*/,//req.body.milestoneid, //id del hito, puede ser cualquier cosa
@@ -1149,7 +1137,7 @@ router.put("/new/:path/many-milestones/:contractingprocess_id",verifyToken, func
 
     if ( table != "" && !isNaN(contractingprocess_id) && req.body.milestones.length > 0 ) {
 
-        edca_db.tx(function (t) {
+        db_conf.edca_db.tx(function (t) {
             var milestone_queries = [];
 
             for (var i = 0 ; i< req.body.milestones.length; i++){
@@ -1230,7 +1218,7 @@ router.put('/new/:path/document/:contractingprocess_id',verifyToken, function (r
     }
 
     if ( table != "" && !isNaN(contractingprocess_id) ){
-        edca_db.one('insert into $1~ (contractingprocess_id, document_type, documentid, title, description, url, date_published, date_modified, format, language) values ($2,$3,$4,$5,$6,$7,$8,$9,$10,$11) ' +
+        db_conf.edca_db.one('insert into $1~ (contractingprocess_id, document_type, documentid, title, description, url, date_published, date_modified, format, language) values ($2,$3,$4,$5,$6,$7,$8,$9,$10,$11) ' +
             'returning id as document_id, contractingprocess_id',
             [
                 table, //tabla donde se inserta el documento, opciones: planningdocuments, tenderdocuments, awarddocuments, contractdocuments ...
@@ -1305,7 +1293,7 @@ router.put('/new/:path/many-documents/:contractingprocess_id',verifyToken, funct
 
     if ( table != "" && !isNaN(contractingprocess_id) && req.body.documents.length > 0 ){
 
-        edca_db.tx(function (t) {
+        db_conf.edca_db.tx(function (t) {
 
             var document_queries=[];
             for ( var i=0; i < req.body.documents.length; i++ ){
@@ -1365,7 +1353,7 @@ router.put('/new/transaction/:contractingprocess_id',verifyToken, function (req,
     var contractingprocess_id = Math.abs(req.params.contractingprocess_id);
     if ( !isNaN(contractingprocess_id)) {
 
-        edca_db.one('insert into implementationtransactions (contractingprocess_id, transactionid, source, implementation_date, value_amount, value_currency, ' +
+        db_conf.edca_db.one('insert into implementationtransactions (contractingprocess_id, transactionid, source, implementation_date, value_amount, value_currency, ' +
             'providerorganization_scheme,providerorganization_id,providerorganization_legalname,providerorganization_uri,' +
             'receiverorganization_scheme,receiverorganization_id,receiverorganization_legalname,receiverorganization_uri, uri) ' +
             'values ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) returning id', [
@@ -1420,7 +1408,7 @@ router.delete('/delete/:path/:id',verifyToken,function (req, res ) {
     var id = Math.abs(req.params.id);
 
     if (table != "" && !isNaN( id )) {
-        edca_db.one('delete from $1~ cascade where id = $2 returning id', [
+        db_conf.edca_db.one('delete from $1~ cascade where id = $2 returning id', [
             table,
             id
         ]).then(function (data) {
@@ -1453,7 +1441,7 @@ router.delete('/delete/all/:path/:contractingprocess_id',verifyToken,function (r
    var id = Math.abs(req.params.contractingprocess_id);
 
    if (table != "" && !isNaN( id )) {
-       edca_db.manyOrNone('delete from $1~ cascade where contractingprocess_id = $2 returning id', [
+       db_conf.edca_db.manyOrNone('delete from $1~ cascade where contractingprocess_id = $2 returning id', [
            table,
            id
        ]).then(function (data) {
