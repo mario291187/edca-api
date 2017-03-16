@@ -3,27 +3,27 @@ var options = {};
 
 pgp = require('pg-promise')(options);
 
-var db;
+var edca_db;
 
 // Linked postgresql docker container
 if ( typeof process.env.POSTGRES_PORT_5432_TCP_ADDR != "undefined" ) {
-    process.env.DB = 'postgres://';
-    process.env.DB += process.env.POSTGRES_USER || 'postgres';
-    process.env.DB += ':';
-    process.env.DB += process.env.POSTGRES_ENV_POSTGRES_PASSWORD || '';
-    process.env.DB += '@';
-    process.env.DB += process.env.POSTGRES_PORT_5432_TCP_ADDR;
-    process.env.DB += '/';
-    process.env.DB += process.env.POSTGRES_DB || 'postgres';
+    process.env.EDCA_DB = 'postgres://';
+    process.env.EDCA_DB += process.env.POSTGRES_USER || 'postgres';
+    process.env.EDCA_DB += ':';
+    process.env.EDCA_DB += process.env.POSTGRES_ENV_POSTGRES_PASSWORD || '';
+    process.env.EDCA_DB += '@';
+    process.env.EDCA_DB += process.env.POSTGRES_PORT_5432_TCP_ADDR;
+    process.env.EDCA_DB += '/';
+    process.env.EDCA_DB += process.env.POSTGRES_DB || 'postgres';
 }
 
-if ( typeof process.env.DB != "undefined" ){
-    console.log("DB: ", process.env.DB);
-    db = pgp( process.env.DB );
+if ( typeof process.env.EDCA_DB != "undefined" ){
+    console.log("EDCA_DB: ", process.env.EDCA_DB);
+    edca_db = pgp( process.env.EDCA_DB );
 } else {
-    console.log("Warning: BM_DB env variable is not set\n " +
+    console.log("Warning: EDCA_DB env variable is not set\n " +
         " defaulting to -> postgres://tester:test@localhost/edca");
-    db = pgp({
+    edca_db = pgp({
         host: 'localhost',
         //port: 5433,
         database: 'edca',
@@ -34,5 +34,5 @@ if ( typeof process.env.DB != "undefined" ){
 
 
 module.exports = {
-    edca_db : db
+    edca_db : edca_db
 };
