@@ -594,7 +594,7 @@ function getProcurementMethod( method ) {
                 return "Licitación pública";
                 break;
             default:
-                return method;
+                return method.toString();
         }
     }
 
