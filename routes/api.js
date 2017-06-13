@@ -573,6 +573,34 @@ router.post('/update/organization/:type/:id',verifyToken, function (req, res){
     }
 });
 
+
+function getProcurementMethod( method ) {
+
+    if ( !isNaN(method) ) {
+        switch (method) {
+            case 0:
+                return "Adjudicación directa";
+                break;
+            case 1:
+                return "Contrataciones ASA";
+                break;
+            case 2:
+                return "Convenio de colaboración";
+                break;
+            case 3:
+                return "Invitación a tres";
+                break;
+            case 4:
+                return "Licitación pública";
+                break;
+            default:
+                return method;
+        }
+    }
+
+    return method;
+}
+
 // Tender
 router.post('/update/tender/:contractingprocess_id',verifyToken, function (req, res){
     var id = Math.abs(req.params.contractingprocess_id);
@@ -592,7 +620,7 @@ router.post('/update/tender/:contractingprocess_id',verifyToken, function (req, 
             req.body.minvalue_currency,
             numericCol(req.body.value_amount),
             req.body.value_currency,
-            req.body.procurementmethod,
+            getProcurementMethod( req.body.procurementmethod ),
             req.body.procurementmethod_rationale,
             req.body.awardcriteria,
             req.body.awardcriteria_details,
