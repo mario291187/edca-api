@@ -326,6 +326,27 @@ function numericCol( number ){
 /* * * * * *
  * Updates *
  * * * * * */
+
+
+function getDestino ( destino ){
+    if (!isNaN(destino)){
+        switch(destino){
+            case 0:
+                return "Adquisición de bienes y servicios";
+                break;
+            case 1:
+                return "Obra pública";
+                break;
+            case 2:
+                return "Servicios relacionados con la obra";
+                break;
+            default:
+                return destino.toString();
+        }
+    }
+    return destino;
+}
+
 //Contracting process
 router.post("/update/contractingprocess/:id", verifyToken, function (req, res){
 
@@ -344,7 +365,7 @@ router.post("/update/contractingprocess/:id", verifyToken, function (req, res){
             req.body.uri,
             req.body.license,
             req.body.publicationpolicy,
-            req.body.destino,
+            getDestino(req.body.destino),
             //req.body.description
             id // id del proceso de contratación
         ]).then(function (data) {
@@ -808,7 +829,7 @@ router.put('/new/contractingprocess',verifyToken, function(req, res){
                 req.body.uri,
                 req.body.license,
                 req.body.publicationpolicy,
-                req.body.destino
+                getDestino(req.body.destino)
                 //req.body.description
             ]).then(function (process) {
 
