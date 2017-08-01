@@ -1489,14 +1489,14 @@ router.delete('/delete/all/:path/:contractingprocess_id',verifyToken,function (r
    var table = getTableName( req.params.path, 'delete' );
    var id = Math.abs(req.params.contractingprocess_id);
 
-   if (table != "" && !isNaN( id )) {
+   if (table !== "" && !isNaN( id )) {
        db_conf.edca_db.manyOrNone('delete from $1~ cascade where contractingprocess_id = $2 returning id', [
            table,
            id
        ]).then(function (data) {
            res.json({
                status: "Ok",
-               description: "Objetos eliminado",
+               description: "Objetos eliminados",
                data: data
            });
        }).catch(function (data) {
@@ -1515,6 +1515,96 @@ router.delete('/delete/all/:path/:contractingprocess_id',verifyToken,function (r
            }
        });
    }
+});
+
+
+/* OCDS 1.1 */
+router.get('/1.1/parties', function (req, res) {
+    //get party roles
+    db_conf.edca_db.manyOrNone('select * from parties').then(function (entities) {
+        res.jsonp(entities);
+    });
+});
+
+router.get('/1.1/entity', function (req, res) {
+
+    db_conf.edca_db.one('select * from parties where id = $1', req.body.id).then(function (entity) {
+        //get party roles
+        res.jsonp(entity);
+    });
+});
+
+// new party
+router.put('/1.1/entity/', function (req,res) {
+    //verifica que la organización no exista
+    //inserta en entities
+
+    //db_conf.edca_db.one('insert into parties (...) values ()')
+
+});
+
+//new parties
+router.put('/1.1/parties', function (req, res) {
+
+});
+
+//update party
+router.post('/1.1/entity', function(req,res){
+
+    db_conf.edca_db.one('update parties set ').then(function(data){
+
+    }).catch(function (error) {
+        console.log(error);
+        res.jsonp({
+            status : 'Error',
+            error: error
+        });
+    });
+
+});
+
+router.delete('/1.1/party', function (req, res) {
+    db_conf.edca_db.one('delete from parties where id = $1 returning id', req.body.id).then(function (entity) {
+        res.jsonp({
+            status : 'Ok',
+            entity : { id: entity.id }
+        });
+    }).catch(function (error) {
+        console.log(error);
+        res.status(400).jsonp({
+            status: 'Error',
+            error : error
+        });
+    })
+});
+
+
+//delete all parties per contracting process
+router.delete('/1.1/parties', function (req, res) {
+
+    db_conf.edca_db.manyOrNone('delete from parties where contractingprocess_id = $1 returning id ',[
+        req.body.contractingprocess_id
+    ]).then(function(deleted_parties){
+        res.jsonp({
+            status: 'Ok',
+            parties: deleted_parties
+        });
+    }).catch(function (error) {
+       res.jsonp({
+           status: 'Error',
+           error: error
+       });
+    });
+
+});
+
+//add party roles
+router.put('/1.1/role/', function (req, res) {
+    // add party role
+});
+
+router.delete('/1.1/role', function (req, res) {
+    // remove party role
 });
 
 module.exports = router;
