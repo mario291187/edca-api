@@ -1529,19 +1529,25 @@ router.get('/1.1/parties',verifyToken, function (req, res) {
             req.body.contractingprocess_id
         ]).then(function (parties) {
             //get party roles
-            res.jsonp(parties);
+            res.jsonp({
+                status :'Ok',
+                data: parties
+            });
         });
     } else if(!isNaN(req.query.contractingprocess_id) && !isNaN(req.query.party_id)){
         db_conf.edca_db.one('select * from parties where contractingprocess_id = $1 and id = $2', [
             req.body.contractingprocess_id, req.body.party_id
         ]).then(function (party) {
             //get party roles
-            res.jsonp(party);
+            res.jsonp({
+                status :'Ok',
+                data: party
+            });
         });
         res.send('party');
     } else {
         //error
-        res.jsonp({
+        res.status(400).jsonp({
             status: 'Error',
             message: 'Parámetros incorrectos'
         })
