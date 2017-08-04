@@ -1519,19 +1519,33 @@ router.delete('/delete/all/:path/:contractingprocess_id',verifyToken,function (r
 
 
 /* OCDS 1.1 */
-router.get('/1.1/parties', function (req, res) {
-    //get party roles
-    db_conf.edca_db.manyOrNone('select * from parties').then(function (entities) {
-        res.jsonp(entities);
-    });
-});
 
-router.get('/1.1/entity', function (req, res) {
+//get parties
+router.get('/1.1/parties',verifyToken, function (req, res) {
 
-    db_conf.edca_db.one('select * from parties where id = $1', req.body.id).then(function (entity) {
-        //get party roles
-        res.jsonp(entity);
-    });
+    //all parties
+    if ( !isNaN(req.query.contractingprocess_id) && isNaN(req.query.party_id) ) {
+        db_conf.edca_db.one('select * from parties where contractingprocess_id = $1', [
+            req.body.contractingprocess_id
+        ]).then(function (parties) {
+            //get party roles
+            res.jsonp(parties);
+        });
+    } else if(!isNaN(req.query.contractingprocess_id) && !isNaN(req.query.party_id)){
+        db_conf.edca_db.one('select * from parties where contractingprocess_id = $1 and id = $2', [
+            req.body.contractingprocess_id, req.body.party_id
+        ]).then(function (party) {
+            //get party roles
+            res.jsonp(party);
+        });
+        res.send('party');
+    } else {
+        //error
+        res.jsonp({
+            status: 'Error',
+            message: 'Parámetros incorrectos'
+        })
+    }
 });
 
 // new party
