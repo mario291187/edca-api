@@ -6,7 +6,6 @@ create user tester with password 'test';
 grant all privileges on database edca to tester;
 
 \c edca
-
 set role tester;
 
 /* CONTRATING PROCESS */
@@ -34,23 +33,21 @@ create table links(
     contractingprocess_id integer references contractingprocess(id) on delete cascade
     );
 
-
 /**
  * OCDS 1.1 Relations
  */
 
-
 /* Parties */
 drop table if exists Parties cascade;
 create table Parties(
-id serial primary key,
 contractingprocess_id integer references contractingprocess(id) on delete cascade,
-/* Campos de organización */
 name text,
+id serial primary key,
 identifier_scheme text,
 identifier_id text,
 identifier_legalname text,
 identifier_uri text,
+/* additionalIdentifiers */
 address_streetaddress text,
 address_locality text,
 address_region text,
@@ -60,7 +57,9 @@ contactpoint_name text,
 contactpoint_email text,
 contactpoint_telephone text,
 contactpoint_faxnumber text,
-contactpoint_url text
+contactpoint_url text,
+/* roles */
+details text
 );
 
 /* Party Role Catalog */
@@ -72,16 +71,16 @@ create table PartyRoles(
     description text
 );
 
-insert into PartyRoles( code, title, description) values
-('buyer','Buyer','The buyer is the entity whose budget will be used to purchase the goods.'),
-('procuringEntity','Procuring Entity','The entity managing the procurement, which may be different from the buyer who is paying / using the items being procured.'),
-('supplier','Supplier','The entity awarded or contracted to provide supplies, works or services.'),
-('tenderer','Tenderer','All entities who submit a tender'),
-('funder','Funder','The funder is an entity providing money or finance for this contracting process.'),
-('enquirer','Enquirer','A party who has made an enquiry during the enquiry phase of a contracting process.'),
-('payer','Payer','A party making a payment from a transaction'),
-('payee','Payee','A party in receipt of a payment from a transaction'),
-('reviewBody','Review Body','A party responsible for the review of this procurement process. This party often has a role in any challenges made to the contract award.');
+insert into PartyRoles( code, title, description ) values
+('buyer', 'Buyer', 'The buyer is the entity whose budget will be used to purchase the goods.'),
+('procuringEntity', 'Procuring Entity', 'The entity managing the procurement, which may be different from the buyer who is paying / using the items being procured.'),
+('supplier', 'Supplier', 'The entity awarded or contracted to provide supplies, works or services.'),
+('tenderer', 'Tenderer', 'All entities who submit a tender'),
+('funder', 'Funder', 'The funder is an entity providing money or finance for this contracting process.'),
+('enquirer', 'Enquirer', 'A party who has made an enquiry during the enquiry phase of a contracting process.'),
+('payer', 'Payer', 'A party making a payment from a transaction'),
+('payee', 'Payee', 'A party in receipt of a payment from a transaction'),
+('reviewBody', 'Review Body','A party responsible for the review of this procurement process. This party often has a role in any challenges made to the contract award.');
 
 drop table if exists Suppliers cascade;
 create table Suppliers(
@@ -125,16 +124,6 @@ create table amendmentchanges (
 id serial primary key,
 amendments_id integer references amendments(id) on delete cascade
 );
-
-/* tablas no necesarias */
-/*
-drop table if exists PartiesPartyRoles;
-create table PartiesPartyRoles(
-    id serial primary key,
-    parties_id integer references Parties(id) on delete cascade,
-    partyrole_id integer references PartyRoles(id) on delete cascade
-);
-*/
 
 /* * * * * * * * * * * * * * * * * * * * */
 
