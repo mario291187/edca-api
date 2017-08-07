@@ -1620,13 +1620,58 @@ router.delete('/1.1/parties', function (req, res) {
 
 //add party roles
 router.put('/1.1/role/', function (req, res) {
-    // add party role
+
 });
 
+//remove party role
 router.delete('/1.1/role', function (req, res) {
-    // remove party role
+
 });
 
+//get amenments
+router.get('/1.1/amendments', function (req, res) {
+
+});
+
+//new amendment
+router.put('/1.1/amendment', function(req, res){
+
+});
+
+//update amendment
+router.post('/1.1/amendment', function(req, res){
+
+});
+
+//delete amenment
+router.delete('/1.1/amendment', function(req, res){
+
+});
+
+//get changes
+router.get('/1.1/changes', function (req, res) {
+
+});
+
+//new change
+router.put('/1.1/change', function (req, res) {
+
+});
+
+//edit change
+router.post('/1.1/change', function(){
+
+});
+
+//delete change
+router.delete('/1.1/change', function (req, res) {
+
+});
+
+//delete changes
+router.delete('/1.1/changes', function (req, res) {
+
+});
 
 
 module.exports = router;
