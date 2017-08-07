@@ -85,44 +85,107 @@ insert into PartyRoles( code, title, description ) values
 drop table if exists Suppliers cascade;
 create table Suppliers(
 id serial primary key,
-contractingprocess_id integer references ContractingProcess,
-parties_id integer references Parties
+contractingprocess_id integer references ContractingProcess(id),
+parties_id integer references Parties(id)
 );
 
 drop table if exists Tenderers cascade;
 create table Tenderers (
 id serial primary key,
-contractingprocess_id integer references ContractingProcess,
-parties_id integer references Parties
+contractingprocess_id integer references ContractingProcess(id),
+parties_id integer references Parties(id)
 );
 
 /* Buyers */
 drop table if exists Buyers cascade;
 create table Buyers(
 id serial primary key,
-contractingprocess_id integer references ContractingProcess,
-parties_id integer references Parties
+contractingprocess_id integer references ContractingProcess(id),
+parties_id integer references Parties(id)
 );
 
 /* Procuring Entities */
 drop table if exists ProcuringEntities cascade;
 create table ProcuringEntities(
 id serial primary key,
-contractingprocess_id integer references ContractingProcess,
-parties_id integer references Parties
+contractingprocess_id integer references ContractingProcess(id),
+parties_id integer references Parties(id)
 );
 
 /* Amendments */
-drop table if exists amendments cascade;
-create table amendments(
-id serial primary key
+/* Tender Amendments */
+drop table if exists TenderAmendments cascade;
+create table TenderAmendments(
+id serial primary key,
+contractingprocess_id integer references ContractingProcess(id),
+tender_id integer references Tender(id),
+amendment_date date,
+rationale text,
+amendment_id text,
+description text,
+amendsReleaseID text,
+releaseID text
 );
 
-/* Changes */
-drop table if exists amendmentchanges cascade;
-create table amendmentchanges (
+/* Tender amendments -> Changes */
+drop table if exists TenderAmendmentsChanges cascade;
+create table TenderAmendmentsChanges (
 id serial primary key,
-amendments_id integer references amendments(id) on delete cascade
+contractingprocess_id integer references ContractingProcess(id) on delete cascade,
+tender_id integer references Tender(id) on delete cascade,
+tenderamendments_id integer references TenderAmendments(id) on delete cascade,
+property text,
+former_value text
+);
+
+/* Awards Amendments */
+drop table if exists AwardsAmendments cascade;
+create table AwardsAmendments(
+id serial primary key,
+contractingprocess_id integer references ContractingProcess(id),
+award_id integer references Award(id)
+amendment_date date,
+rationale text,
+amendment_id text,
+description text,
+amendsReleaseID text,
+releaseID text
+);
+
+/* Award amendments -> Changes */
+drop table if exists AwardsAmendmentsChanges cascade;
+create table AwardsAmendmentsChanges (
+id serial primary key,
+contractingprocess_id integer references ContractingProcess(id) on delete cascade,
+award_id integer references Award(id) on delete cascade,
+awardsamendments_id integer references AwardsAmendments(id) on delete cascade,
+property text,
+former_value text
+);
+
+/* Contracts amendments */
+drop table if exists ContractsAmendments cascade;
+create table ContractsAmendments(
+id serial primary key,
+contractingprocess_id integer references ContractingProcess(id),
+contract_id integer references Contract(id)
+amendment_date date,
+rationale text,
+amendment_id text,
+description text,
+amendsReleaseID text,
+releaseID text
+);
+
+/* Contracts amendments -> Changes */
+drop table if exists ContractsAmendmentsChanges cascade;
+create table ContractsAmendmentsChanges (
+id serial primary key,
+contractingprocess_id integer references ContractingProcess(id) on delete cascade,
+contract_id integer references Contract(id),
+contractsamendments_id integer references ContractsAmendments(id) on delete cascade,
+property text,
+former_value text
 );
 
 /* * * * * * * * * * * * * * * * * * * * */
@@ -400,7 +463,7 @@ create table TenderItemAdditionalClassifications(
 	uri text
 );
 
-
+/* OCDS 1.0 */
 drop table if exists TenderAmendmentChanges cascade;
 create table TenderAmendmentChanges(
 	id serial primary key, 
@@ -429,7 +492,7 @@ create table Award(
     amendment_rationale text
 );
 
-
+/* OCDS 1.0 */
 drop table if exists AwardAmendmentChanges cascade;
 create table AwardAmendmentChanges(
 	id serial primary key,
@@ -542,7 +605,7 @@ create table Contract(
 );
 
 
-
+/* OCDS 1.0 */
 drop table if exists ContractAmendmentChanges cascade;
 create table ContractAmendmentChanges(
 	id serial primary key,
