@@ -1535,6 +1535,12 @@ router.get('/1.1/parties', function (req, res) {
                 status :'Ok',
                 data: parties
             });
+        }).catch(function (erro) {
+            console.log(error);
+            res.status(400).jsonp({
+                status: 'Error',
+                error: error
+            });
         });
     } else if(!isNaN(req.query.contractingprocess_id) && !isNaN(req.query.party_id)){
         db_conf.edca_db.one('select * from parties where contractingprocess_id = $1 and id = $2', [
@@ -1545,8 +1551,14 @@ router.get('/1.1/parties', function (req, res) {
                 status :'Ok',
                 data: party
             });
+        }).catch(function (error) {
+            console.log(error);
+            res.status(400).jsonp({
+                status: 'Error',
+                error: error
+            });
         });
-        res.send('party');
+
     } else {
         //error
         res.status(400).jsonp({
@@ -1558,7 +1570,7 @@ router.get('/1.1/parties', function (req, res) {
 
 // new party
 router.put('/1.1/party/', function (req,res) {
-    //verifica que la organización no exista
+    //falta verificar que la organización no exista
 
     db_conf.edca_db.one('insert into parties (contractingprocess_id, name, identifier_scheme, ' +
         ' identifier_id, identifier_legalname, identifier_uri, address_streetaddress, address_locality, ' +
@@ -1879,7 +1891,10 @@ router.get('/1.1/:path/amendments', function (req, res) {
         case 'contracts':
             break;
         default:
-            res.jsonp({});
+            res.status(400).jsonp({
+                status: 'Error',
+                message: 'Parámetros incorrectos'
+            });
     }
 });
 
@@ -1893,7 +1908,10 @@ router.put('/1.1/:path/amendment', function(req, res){
         case 'contracts':
             break;
         default:
-            res.jsonp({});
+            res.status(400).jsonp({
+                status: 'Error',
+                message: 'Parámetros incorrectos'
+            });
     }
 });
 
@@ -1907,7 +1925,10 @@ router.post('/1.1/:path/amendment', function(req, res){
         case 'contracts':
             break;
         default:
-            res.jsonp({});
+            res.status(400).jsonp({
+                status: 'Error',
+                message: 'Parámetros incorrectos'
+            });
     }
 });
 
@@ -1921,7 +1942,10 @@ router.delete('/1.1/:path/amendment', function(req, res){
         case 'contracts':
             break;
         default:
-            res.jsonp({});
+            res.status(400).jsonp({
+                status: 'Error',
+                message: 'Parámetros incorrectos'
+            });
     }
 });
 
@@ -1935,7 +1959,10 @@ router.get('/1.1/:path/changes', function (req, res) {
         case 'contracts':
             break;
         default:
-            res.jsonp({});
+            res.status(400).jsonp({
+                status: 'Error',
+                message: 'Parámetros incorrectos'
+            });
     }
 });
 
@@ -1949,7 +1976,10 @@ router.put('/1.1/:path/change', function (req, res) {
         case 'contracts':
             break;
         default:
-            res.jsonp({});
+            res.status(400).jsonp({
+                status: 'Error',
+                message: 'Parámetros incorrectos'
+            });
     }
 
 });
@@ -1965,7 +1995,10 @@ router.post('/1.1/:path/change', function(){
         case 'contracts':
             break;
         default:
-            res.jsonp({});
+            res.status(400).jsonp({
+                status: 'Error',
+                message: 'Parámetros incorrectos'
+            });
     }
 
 });
@@ -1980,7 +2013,10 @@ router.delete('/1.1/change', function (req, res) {
         case 'contracts':
             break;
         default:
-            res.jsonp({});
+            res.status(400).jsonp({
+                status: 'Error',
+                message: 'Parámetros incorrectos'
+            });
     }
 });
 
