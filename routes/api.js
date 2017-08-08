@@ -172,7 +172,7 @@ function getTableName( path, opType ) {
             break;
     }
 
-    if ( opType == "read" ){
+    if ( opType === "read" ){
         switch ( path ) {
             case "planning":
                 break;
@@ -187,7 +187,7 @@ function getTableName( path, opType ) {
         }
     }
 
-    if ( opType == "delete"){
+    if ( opType === "delete"){
         switch ( path ){
             case "contractingprocess":
                 table = "contractingprocess";
@@ -251,7 +251,7 @@ router.get('/getall/:path/:contractingprocess_id/', verifyToken, function(req, r
     var table = getTableName( req.params.path, 'read' );
     var contractingprocess_id = Math.abs(req.params.contractingprocess_id);
 
-    if ( table != "" && !isNaN(contractingprocess_id)) {
+    if ( table !== "" && !isNaN(contractingprocess_id)) {
         db_conf.edca_db.manyOrNone("select * from $1~ where contractingprocess_id = $2 order by id", [
             table,
             contractingprocess_id
@@ -285,7 +285,7 @@ router.get('/getbyid/:path/:id', verifyToken ,function(req, res){
     var table = getTableName( req.params.path, 'read' );
     var id = Math.abs( req.params.id );
 
-    if ( table != "" && !isNaN( id )){
+    if ( table !== "" && !isNaN( id )){
 
         db_conf.edca_db.oneOrNone("select * from $1~ where id = $2", [
             table,
@@ -316,7 +316,7 @@ router.get('/getbyid/:path/:id', verifyToken ,function(req, res){
 
 
 function dateCol( date ) {
-    return (date == '')?null:date;
+    return (date === '')?null:date;
 }
 
 function numericCol( number ){
@@ -548,7 +548,7 @@ router.post('/update/procuringentity/:contractingprocess_id',verifyToken, functi
 router.post('/update/organization/:type/:id',verifyToken, function (req, res){
 
     var id = Math.abs( req.params.id );
-    if ( ( req.params.type == "tenderer" || req.params.type == "supplier") && !isNaN(id) ) {
+    if ( ( req.params.type === "tenderer" || req.params.type === "supplier") && !isNaN(id) ) {
 
         db_conf.edca_db.one("update $1~ set identifier_scheme= $3, identifier_id =$4, identifier_legalname=$5, identifier_uri=$6, name = $7, address_streetaddress=$8," +
             " address_locality=$9, address_region =$10, address_postalcode=$11, address_countryname=$12, contactpoint_name=$13, contactpoint_email=$14, contactpoint_telephone=$15," +
@@ -817,7 +817,7 @@ router.put('/new/contractingprocess',verifyToken, function(req, res){
     var stage = Math.abs(req.body.stage);
 
 
-    if ( ocid !="" && !isNaN(stage) && stage <= 4) {
+    if ( ocid !== "" && !isNaN(stage) && stage <= 4) {
 
         db_conf.edca_db.tx(function (t) {
 
@@ -905,7 +905,7 @@ router.put('/new/:path/item/:contractingprocess_id',verifyToken, function (req, 
             break;
     }
 
-    if ( table != "" && !isNaN(contractingprocess_id) ) {
+    if ( table !== "" && !isNaN(contractingprocess_id) ) {
 
         db_conf.edca_db.one('insert into $1~ (contractingprocess_id, itemid, description, classification_scheme, classification_id, classification_description, classification_uri,' +
             ' quantity, unit_name, unit_value_amount, unit_value_currency) values ($2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12) returning id', [
@@ -963,7 +963,7 @@ router.put('/new/:path/many-items/:contractingprocess_id',verifyToken, function 
             break;
     }
 
-    if ( table != "" && !isNaN(contractingprocess_id) && req.body.items.length > 0 ) {
+    if ( table !== "" && !isNaN(contractingprocess_id) && req.body.items.length > 0 ) {
 
         db_conf.edca_db.tx(function (t) {
 
@@ -1037,7 +1037,7 @@ router.put('/new/:path/amendmentchange/:contractingprocess_id',verifyToken, func
             break
     }
 
-    if ( table != "" && !isNaN(contractingprocess_id)) {
+    if ( table !== "" && !isNaN(contractingprocess_id)) {
         db_conf.edca_db.one('insert into $1~ (contractingprocess_id, property, former_value) values ($2,$3,$4) returning contractingprocess_id, id as amendmentchange_id', [
             table, //tabla donde se inserta el cambio
             contractingprocess_id, // id del proceso de contratación
@@ -1072,7 +1072,7 @@ router.put('/new/organization/:type/:contractingprocess_id',verifyToken, functio
     //type -> supplier,tenderer
     var contractingprocess_id = Math.abs(req.params.contractingprocess_id);
 
-    if ((req.params.type == "supplier" || req.params.type == "tenderer") && !isNaN(contractingprocess_id)){
+    if ((req.params.type === "supplier" || req.params.type === "tenderer") && !isNaN(contractingprocess_id)){
 
         db_conf.edca_db.one("insert into $17~" +
             " (contractingprocess_id, identifier_scheme, identifier_id, identifier_legalname, identifier_uri, name, address_streetaddress," +
@@ -1134,7 +1134,7 @@ router.put("/new/:path/milestone/:contractingprocess_id",verifyToken, function (
     }
 
     var contractingprocess_id = Math.abs( req.params.contractingprocess_id);
-    if ( table != "" && !isNaN(contractingprocess_id) ) {
+    if ( table !== "" && !isNaN(contractingprocess_id) ) {
         db_conf.edca_db.one('insert into $1~ (contractingprocess_id, milestoneid, title, description, duedate, date_modified, status) values ($2,$3,$4,$5,$6,$7,$8) returning id', [
             table, // tabla donde se registra el hito
             contractingprocess_id, // id del proceso de contratación
@@ -1184,7 +1184,7 @@ router.put("/new/:path/many-milestones/:contractingprocess_id",verifyToken, func
 
     var contractingprocess_id = Math.abs( req.params.contractingprocess_id);
 
-    if ( table != "" && !isNaN(contractingprocess_id) && req.body.milestones.length > 0 ) {
+    if ( table !== "" && !isNaN(contractingprocess_id) && req.body.milestones.length > 0 ) {
 
         db_conf.edca_db.tx(function (t) {
             var milestone_queries = [];
@@ -1266,7 +1266,7 @@ router.put('/new/:path/document/:contractingprocess_id',verifyToken, function (r
             */
     }
 
-    if ( table != "" && !isNaN(contractingprocess_id) ){
+    if ( table !== "" && !isNaN(contractingprocess_id) ){
         db_conf.edca_db.one('insert into $1~ (contractingprocess_id, document_type, documentid, title, description, url, date_published, date_modified, format, language) values ($2,$3,$4,$5,$6,$7,$8,$9,$10,$11) ' +
             'returning id as document_id, contractingprocess_id',
             [
@@ -1340,7 +1340,7 @@ router.put('/new/:path/many-documents/:contractingprocess_id',verifyToken, funct
 
     //console.log(req.body.documents.length);
 
-    if ( table != "" && !isNaN(contractingprocess_id) && req.body.documents.length > 0 ){
+    if ( table !== "" && !isNaN(contractingprocess_id) && req.body.documents.length > 0 ){
 
         db_conf.edca_db.tx(function (t) {
 
@@ -1456,7 +1456,7 @@ router.delete('/delete/:path/:id',verifyToken,function (req, res ) {
     var table = getTableName( req.params.path, 'delete' );
     var id = Math.abs(req.params.id);
 
-    if (table != "" && !isNaN( id )) {
+    if (table !== "" && !isNaN( id )) {
         db_conf.edca_db.one('delete from $1~ cascade where id = $2 returning id', [
             table,
             id
@@ -1518,10 +1518,12 @@ router.delete('/delete/all/:path/:contractingprocess_id',verifyToken,function (r
 });
 
 
-/* OCDS 1.1 */
+/* *
+ *  OCDS 1.1
+ *  */
 
 //get parties
-router.get('/1.1/parties',verifyToken, function (req, res) {
+router.get('/1.1/parties', function (req, res) {
 
     //all parties
     if ( !isNaN(req.query.contractingprocess_id) && isNaN(req.query.party_id) ) {
@@ -1555,39 +1557,88 @@ router.get('/1.1/parties',verifyToken, function (req, res) {
 });
 
 // new party
-router.put('/1.1/entity/', function (req,res) {
+router.put('/1.1/party/', function (req,res) {
     //verifica que la organización no exista
-    //inserta en entities
 
-    //db_conf.edca_db.one('insert into parties (...) values ()')
-
-});
-
-//new parties
-router.put('/1.1/parties', function (req, res) {
-
-});
-
-//update party
-router.post('/1.1/entity', function(req,res){
-
-    db_conf.edca_db.one('update parties set ').then(function(data){
-
+    db_conf.edca_db.one('insert into parties (contractingprocess_id, name, identifier_scheme, ' +
+        ' identifier_id, identifier_legalname, identifier_uri, address_streetaddress, address_locality, ' +
+        ' address_region, address_postalcode, address_countryname, contactpoint_name, contactpoint_email, ' +
+        ' contactpoint_telephone, contactpoint_faxnumber, contactpoint_url) values' +
+        ' ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15,$16) returning id', [
+        req.body.contractingprocess_id,
+        req.body.name,
+        req.body.identifier_scheme,
+        req.body.identifier_id,
+        req.body.identifier_legalname,
+        req.body.identifier_uri,
+        req.body.address_streetaddress,
+        req.body.address_locality,
+        req.body.address_region,
+        req.body.address_postalcode,
+        req.body.address_countryname,
+        req.body.contactpoint_name,
+        req.body.contactpoint_email,
+        req.body.contactpoint_telephone,
+        req.body.contactpoint_faxnumber,
+        req.body.contactpoint_url
+    ]).then(function (data) {
+        res.jsonp({
+            status: 'Ok',
+            data : data
+        });
     }).catch(function (error) {
         console.log(error);
-        res.jsonp({
-            status : 'Error',
+        res.status(400).jsonp({
+            status: 'Error',
             error: error
         });
     });
 
 });
 
+//update party
+router.post('/1.1/party', function(req,res){
+
+    db_conf.edca_db.one('update parties set contractingprocess_id=$1, name=$2, identifier_scheme=$3,' +
+        ' identifier_id=$4, identifier_legalname=$5, identifier_uri=$6, address_streetaddress=$7, address_locality=$8,' +
+        ' address_region=$9, address_postalcode=$10, address_countryname=$11, contactpoint_name=$12, contactpoint_email=$13,' +
+        ' contactpoint_telephone=$14, contactpoint_faxnumber=$15, contactpoint_url=$16 where id = $17',[
+        req.body.contractingprocess_id,
+        req.body.name,
+        req.body.identifier_scheme,
+        req.body.identifier_id,
+        req.body.identifier_legalname,
+        req.body.identifier_uri,
+        req.body.address_streetaddress,
+        req.body.address_locality,
+        req.body.address_region,
+        req.body.address_postalcode,
+        req.body.address_countryname,
+        req.body.contactpoint_name,
+        req.body.contactpoint_email,
+        req.body.contactpoint_telephone,
+        req.body.contactpoint_faxnumber,
+        req.body.contactpoint_url,
+        req.body.id
+    ]).then(function(data){
+        res.jsonp({
+            status: 'Ok',
+            data : data
+        });
+    }).catch(function (error) {
+        console.log(error);
+        res.status(400).jsonp({
+            status : 'Error',
+            error: error
+        });
+    });
+});
+
 router.delete('/1.1/party', function (req, res) {
-    db_conf.edca_db.one('delete from parties where id = $1 returning id', req.body.id).then(function (entity) {
+    db_conf.edca_db.one('delete from parties where id = $1 returning id', req.body.id).then(function (party) {
         res.jsonp({
             status : 'Ok',
-            entity : { id: entity.id }
+            data : party
         });
     }).catch(function (error) {
         console.log(error);
@@ -1610,10 +1661,11 @@ router.delete('/1.1/parties', function (req, res) {
             parties: deleted_parties
         });
     }).catch(function (error) {
-       res.jsonp({
-           status: 'Error',
-           error: error
-       });
+        console.log(error);
+        res.status(400).jsonp({
+            status: 'Error',
+            error: error
+        });
     });
 
 });
@@ -1621,57 +1673,351 @@ router.delete('/1.1/parties', function (req, res) {
 //add party roles
 router.put('/1.1/role/', function (req, res) {
 
+    var role = req.body.role;
+
+    switch (role){
+        case 'buyer':
+            db_conf.edca_db.oneOrNone('select * from buyers where contractingprocess_id = $1',[
+                req.body.contractingprocess_id
+            ]).then(function (buyer) {
+                if (buyer === null){
+                    return db_conf.edca_db.one('insert into buyers(parties_id, contractingprocess_id) values ($1,$2) returning id', [
+                        req.body.parties_id,
+                        req.body.contractingprocess_id
+                    ]);
+                }
+
+                return db_conf.edca_db.one('update buyers set parties_id=$1 where contractingprocess_id=$2 returning id', [
+                    req.body.parties_id,
+                    req.body.contractingprocess_id
+                ]);
+            }).then(function (buyer) {
+                res.jsonp({
+                    status: 'Ok',
+                    data: buyer
+                })
+            }).catch(function (error) {
+                res.status(400).jsonp({
+                    status: 'Error',
+                    error: error
+                });
+            });
+            break;
+        case 'procuringEntity':
+            db_conf.edca_db.oneOrNone('select * from procuringentities where contractingprocess_id = $1',[
+                req.body.contractingprocess_id
+            ]).then(function (pe) {
+                if (pe === null){
+                    return db_conf.edca_db.one('insert into procuringentities(parties_id, contractingprocess_id) values ($1,$2) returning id', [
+                        req.body.parties_id,
+                        req.body.contractingprocess_id
+                    ]);
+                }
+
+                return db_conf.edca_db.one('update procuringentities set parties_id=$1 where contractingprocess_id=$2 returning id', [
+                    req.body.parties_id,
+                    req.body.contractingprocess_id
+                ]);
+            }).then(function (pe) {
+                res.jsonp({
+                    status: 'Ok',
+                    data: pe
+                })
+            }).catch(function (error) {
+                res.status(400).jsonp({
+                    status: 'Error',
+                    error: error
+                });
+            });
+            break;
+        case 'supplier':
+            db_conf.edca_db.oneOrNone('select * from suppliers where contractingprocess_id = $1 and parties_id = $2',[
+                req.body.contractingprocess_id,
+                req.body.parties_id
+            ]).then(function (supplier) {
+                if (supplier === null){
+                    return db_conf.edca_db.one('insert into suppliers (parties_id, contractingprocess_id) values ($1,$2) returning id', [
+                        req.body.parties_id,
+                        req.body.contractingprocess_id
+                    ]);
+                }
+
+                return supplier;
+            }).then(function (supplier) {
+                res.jsonp({
+                    status: 'Ok',
+                    data: supplier
+                });
+            }).catch(function (error) {
+                res.status(400).jsonp({
+                    status: 'Error',
+                    error: error
+                });
+            });
+            break;
+        case 'tenderer':
+            db_conf.edca_db.oneOrNone('select * from tenderers where contractingprocess_id = $1 and parties_id = $2',[
+                req.body.contractingprocess_id,
+                req.body.parties_id
+            ]).then(function (tenderer) {
+                if (supplier === null){
+                    return db_conf.edca_db.one('insert into tenderers(parties_id, contractingprocess_id) values ($1,$2) returning id', [
+                        req.body.parties_id,
+                        req.body.contractingprocess_id
+                    ]);
+                }
+
+                return tenderer;
+            }).then(function (tenderer) {
+                res.jsonp({
+                    status: 'Ok',
+                    data: tenderer
+                });
+            }).catch(function (error) {
+                res.status(400).jsonp({
+                    status: 'Error',
+                    error: error
+                });
+            });
+            break;
+        case 'funder':
+            res.jsonp({
+                status: 'Ok',
+                message: 'Not implemented yet'
+            });
+            break;
+        case 'enquirer':
+            res.jsonp({
+                status: 'Ok',
+                message: 'Not implemented yet'
+            });
+            break;
+        case 'payer':
+            res.jsonp({
+                status: 'Ok',
+                message: 'Not implemented yet'
+            });
+            break;
+        case 'payee':
+            res.jsonp({
+                status: 'Ok',
+                message: 'Not implemented'
+            });
+            break;
+        case 'reviewBody':
+            res.jsonp({
+                status: 'Ok',
+                message: 'Not implemented'
+            });
+            break;
+        default:
+            res.status(400).jsonp({
+                status: 'Error',
+                message: 'Opción desconocida'
+            });
+    }
+
 });
 
 //remove party role
 router.delete('/1.1/role', function (req, res) {
 
+    var rel = '';
+    switch (req.body.role){
+        case 'buyer':
+            rel = 'buyers';
+            break;
+        case 'procuringEntity':
+            rel = 'procuringentities';
+            break;
+        case 'supplier':
+            rel = 'suppliers';
+            break;
+        case 'tenderer':
+            rel = 'tenderers';
+            break;
+        /*case 'funder':
+            break;
+        case 'enquirer':
+            break;
+        case 'payer':
+            break;
+        case 'payee':
+            break;
+        case 'reviewBody':
+            break;*/
+        default:
+            res.jsonp({
+                status: 'Error',
+                message: 'Opción desconocida'
+            });
+    }
+
+    db_conf.edca_db.one('delete from ~$1 where parties_id=$2', [
+        rel,
+        req.body.parties_id
+    ]).then(function (deleted) {
+        res.jsonp({
+            status: 'Ok',
+            data: deleted
+        });
+    }).catch(function (error) {
+        res.status(400).jsonp({
+            status: 'Error',
+            error: error
+        });
+    })
 });
 
 //get amenments
-router.get('/1.1/amendments', function (req, res) {
-
+router.get('/1.1/:path/amendments', function (req, res) {
+    switch ( req.params.path ){
+        case 'tender':
+            break;
+        case 'awards':
+            break;
+        case 'contracts':
+            break;
+        default:
+            res.jsonp({});
+    }
 });
 
 //new amendment
-router.put('/1.1/amendment', function(req, res){
-
+router.put('/1.1/:path/amendment', function(req, res){
+    switch ( req.params.path ){
+        case 'tender':
+            break;
+        case 'awards':
+            break;
+        case 'contracts':
+            break;
+        default:
+            res.jsonp({});
+    }
 });
 
 //update amendment
-router.post('/1.1/amendment', function(req, res){
-
+router.post('/1.1/:path/amendment', function(req, res){
+    switch ( req.params.path ){
+        case 'tender':
+            break;
+        case 'awards':
+            break;
+        case 'contracts':
+            break;
+        default:
+            res.jsonp({});
+    }
 });
 
 //delete amenment
-router.delete('/1.1/amendment', function(req, res){
-
+router.delete('/1.1/:path/amendment', function(req, res){
+    switch ( req.params.path ){
+        case 'tender':
+            break;
+        case 'awards':
+            break;
+        case 'contracts':
+            break;
+        default:
+            res.jsonp({});
+    }
 });
 
 //get changes
-router.get('/1.1/changes', function (req, res) {
-
+router.get('/1.1/:path/changes', function (req, res) {
+    switch ( req.params.path ){
+        case 'tender':
+            break;
+        case 'awards':
+            break;
+        case 'contracts':
+            break;
+        default:
+            res.jsonp({});
+    }
 });
 
 //new change
-router.put('/1.1/change', function (req, res) {
+router.put('/1.1/:path/change', function (req, res) {
+    switch ( req.params.path ){
+        case 'tender':
+            break;
+        case 'awards':
+            break;
+        case 'contracts':
+            break;
+        default:
+            res.jsonp({});
+    }
 
 });
 
 //edit change
-router.post('/1.1/change', function(){
+router.post('/1.1/:path/change', function(){
+
+    switch ( req.params.path ){
+        case 'tender':
+            break;
+        case 'awards':
+            break;
+        case 'contracts':
+            break;
+        default:
+            res.jsonp({});
+    }
 
 });
 
 //delete change
 router.delete('/1.1/change', function (req, res) {
-
+    switch ( req.params.path ){
+        case 'tender':
+            break;
+        case 'awards':
+            break;
+        case 'contracts':
+            break;
+        default:
+            res.jsonp({});
+    }
 });
 
 //delete changes
-router.delete('/1.1/changes', function (req, res) {
+router.delete('/1.1/:path/changes', function (req, res) {
+
+    //:path -> Tender, Awards, Contracts
+
+    switch ( req.params.path ){
+        case 'tender':
+            break;
+        case 'awards':
+            break;
+        case 'contracts':
+            break;
+        default:
+            res.jsonp({
+                status: 'Error',
+                message: 'Opción desconocida'
+            });
+    }
+
+    db_conf.edca_db.manyOrNone('delete from ~$1 where contractingprocess_id=$2 returning id',[
+        req.path.path,
+        req.body.contractingprocess_id
+    ]).then(function (ids) {
+        res.jsonp({
+            status: 'Ok',
+            data: ids
+        })
+    }).catch(function (error) {
+        res.jsonp({
+            status: 'Error',
+            error: error
+        });
+    });
 
 });
-
 
 module.exports = router;

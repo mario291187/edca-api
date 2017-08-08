@@ -841,8 +841,7 @@ module.exports = {
 
 
                 function pm ( method ) {
-
-                    let proc = method;
+                    var proc = method;
 
                     switch (method){
 
