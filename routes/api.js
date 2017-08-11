@@ -1883,12 +1883,16 @@ router.delete('/1.1/role', function (req, res) {
 
 //get amenments
 router.get('/1.1/:path/amendments', function (req, res) {
+    var rel = '';
     switch ( req.params.path ){
         case 'tender':
+            rel = 'TenderAmendments';
             break;
         case 'awards':
+            rel = 'AwardsAmendments';
             break;
         case 'contracts':
+            rel = 'ContractsAmendments';
             break;
         default:
             res.status(400).jsonp({
@@ -1896,16 +1900,36 @@ router.get('/1.1/:path/amendments', function (req, res) {
                 message: 'Parámetros incorrectos'
             });
     }
+
+
+    db_conf.edca_db.manyOrNone('select * from ~$1 where award_id=$2, contractingprocess_id=$3',[
+        rel,
+        req.body.award_id,
+        req.body.contractingprocess_id
+    ]).then(function (amendments) {
+
+    }).catch(function (error) {
+        console.log(error);
+        res.status(400).jsonp({
+            status: 'Error',
+            error: error
+        })
+    })
 });
 
 //new amendment
 router.put('/1.1/:path/amendment', function(req, res){
+
+    var rel = '';
     switch ( req.params.path ){
         case 'tender':
+            rel = 'TenderAmendments';
             break;
         case 'awards':
+            rel = 'AwardAmendments';
             break;
         case 'contracts':
+            rel = 'ContractsAmendments';
             break;
         default:
             res.status(400).jsonp({
@@ -1913,16 +1937,43 @@ router.put('/1.1/:path/amendment', function(req, res){
                 message: 'Parámetros incorrectos'
             });
     }
+
+    db_conf.one('insert into ~$1(contractingprocess_id, contract_id, amendment_date, rationale, amendment_id, ' +
+        'description, amendsReleaseID, releaseID) values ($1,$2,$3,$4,$5,$6,$7,$8,$9) returning id',[
+        rel,
+        req.body.contractingprocess_id,
+        req.body.contract_id,
+        req.body.amendment_date,
+        req.body.rationale,
+        req.body.amendment_id,
+        req.body.description,
+        req.body.amendsReleaseID,
+        req.body.releaseID
+    ]).then(function(data){
+        res.jsonp({
+            status: 'Ok',
+            data: data
+        });
+    }).catch(function (error) {
+        res.status(400).jsonp({
+            status: 'Error',
+            error: error
+        });
+    });
 });
 
 //update amendment
 router.post('/1.1/:path/amendment', function(req, res){
+    var rel = '';
     switch ( req.params.path ){
         case 'tender':
+            rel = 'TenderAmendments';
             break;
         case 'awards':
+            rel = 'AwardAmendments';
             break;
         case 'contracts':
+            rel = 'ContractsAmendments';
             break;
         default:
             res.status(400).jsonp({
@@ -1930,16 +1981,45 @@ router.post('/1.1/:path/amendment', function(req, res){
                 message: 'Parámetros incorrectos'
             });
     }
+
+    db_conf.one('update ~$1 set contractingprocess_id=$2, contract_id=$3, amendment_date=$4, rationale=$5, amendment_id=$6, ' +
+        'description=$7, amendsReleaseID=$8, releaseID=$9 where id = $10 returning id',[
+        rel,
+        req.bod.id,
+        req.body.contractingprocess_id,//?
+        req.body.contract_id, //?
+        req.body.amendment_date,
+        req.body.rationale,
+        req.body.amendment_id,
+        req.body.description,
+        req.body.amendsReleaseID,
+        req.body.releaseID,
+        req.body.id
+    ]).then(function(data){
+        res.jsonp({
+            status: 'Ok',
+            data: data
+        });
+    }).catch(function (error) {
+        res.status(400).jsonp({
+            status: 'Error',
+            error: error
+        });
+    });
 });
 
 //delete amenment
 router.delete('/1.1/:path/amendment', function(req, res){
+    var rel = '';
     switch ( req.params.path ){
         case 'tender':
+            rel = 'TenderAmendments';
             break;
         case 'awards':
+            rel = 'AwardAmendments';
             break;
         case 'contracts':
+            rel = 'ContractsAmendments';
             break;
         default:
             res.status(400).jsonp({
@@ -1947,6 +2027,21 @@ router.delete('/1.1/:path/amendment', function(req, res){
                 message: 'Parámetros incorrectos'
             });
     }
+
+    db_conf.edca_db.one('delete from ~$1 where id = $2',[
+        rel,
+        req.body.amendment_id
+    ]).then(function (data) {
+        res.json({
+            status: 'Ok',
+            data: data
+        })
+    }).catch(function (error) {
+        res.json({
+            status: 'Error',
+            error: error
+        })
+    });
 });
 
 //get changes
@@ -1986,7 +2081,7 @@ router.put('/1.1/:path/change', function (req, res) {
 
 //edit change
 router.post('/1.1/:path/change', function(){
-
+    
     switch ( req.params.path ){
         case 'tender':
             break;

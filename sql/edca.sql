@@ -143,7 +143,7 @@ drop table if exists AwardsAmendments cascade;
 create table AwardsAmendments(
 id serial primary key,
 contractingprocess_id integer references ContractingProcess(id),
-award_id integer references Award(id)
+award_id integer references Award(id),
 amendment_date date,
 rationale text,
 amendment_id text,
@@ -168,7 +168,7 @@ drop table if exists ContractsAmendments cascade;
 create table ContractsAmendments(
 id serial primary key,
 contractingprocess_id integer references ContractingProcess(id),
-contract_id integer references Contract(id)
+contract_id integer references Contract(id),
 amendment_date date,
 rationale text,
 amendment_id text,
