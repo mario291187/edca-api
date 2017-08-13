@@ -2046,12 +2046,16 @@ router.delete('/1.1/:path/amendment', function(req, res){
 
 //get changes
 router.get('/1.1/:path/changes', function (req, res) {
+    var rel = '';
     switch ( req.params.path ){
         case 'tender':
+            rel = 'TenderAmendmentsChanges';
             break;
         case 'awards':
+            rel = 'AwardAmendmentsChanges';
             break;
         case 'contracts':
+            rel = 'ContractsAmendmentsChanges';
             break;
         default:
             res.status(400).jsonp({
@@ -2059,16 +2063,36 @@ router.get('/1.1/:path/changes', function (req, res) {
                 message: 'Parámetros incorrectos'
             });
     }
+
+    db_conf.edca_db.manyOrNone('select * from ~$1 where contractingprocess_id =$2', [
+        rel,
+        req.body.contractingprocess_id
+    ]).then(function (changes) {
+        res.jsonp({
+            status: 'Ok',
+            data: changes
+        });
+    }).catch(function (error) {
+        console.log(error);
+        res.status(400).jsonp({
+            status: 'Error',
+            error: error
+        });
+    });
 });
 
 //new change
 router.put('/1.1/:path/change', function (req, res) {
+    var rel = '';
     switch ( req.params.path ){
         case 'tender':
+            rel = 'TenderAmendmentsChanges';
             break;
         case 'awards':
+            rel = 'AwardAmendmentsChanges';
             break;
         case 'contracts':
+            rel = 'ContractsAmendmentsChanges';
             break;
         default:
             res.status(400).jsonp({
@@ -2076,18 +2100,42 @@ router.put('/1.1/:path/change', function (req, res) {
                 message: 'Parámetros incorrectos'
             });
     }
+
+    db_conf.edca_db.one('insert into ~$1(contractingprocess_id, property, former_value) values ($2, $3, $4) returning id', [
+        rel,
+        req.body.contractingprocess_id,
+        //req.body.award_id,
+        //req.body.awardsamendments_id,
+        req.body.property,
+        req.body.former_value
+    ]).then(function (data) {
+        res.jsonp({
+            status: 'Ok',
+            data: data
+        });
+    }).catch(function (error) {
+        console.log(error);
+        res.jsonp({
+            status: 'Error',
+            error: error
+        });
+    });
 
 });
 
 //edit change
 router.post('/1.1/:path/change', function(){
-    
+
+    var rel = '';
     switch ( req.params.path ){
         case 'tender':
+            rel = 'TenderAmendmentsChanges';
             break;
         case 'awards':
+            rel = 'AwardAmendmentsChanges';
             break;
         case 'contracts':
+            rel = 'ContractsAmendmentsChanges';
             break;
         default:
             res.status(400).jsonp({
@@ -2095,37 +2143,82 @@ router.post('/1.1/:path/change', function(){
                 message: 'Parámetros incorrectos'
             });
     }
+
+    db_conf.edca_db.one('update ~$1 set contractingprocess_id=$2, property=$3, former_value=$4 where id=$5 returning id', [
+        rel,
+        req.body.contractingprocess_id,
+        //req.body.award_id,
+        //req.body.awardsamendments_id,
+        req.body.property,
+        req.body.former_value,
+        req.body.change_id
+    ]).then(function (data) {
+        res.jsonp({
+            status: 'Ok',
+            data: data
+        });
+    }).catch(function (error) {
+        console.log(error);
+        res.jsonp({
+            status: 'Error',
+            error: error
+        });
+    });
+
 
 });
 
 //delete change
 router.delete('/1.1/change', function (req, res) {
+    var rel = '';
     switch ( req.params.path ){
         case 'tender':
+            rel = 'TenderAmendmentsChanges';
             break;
         case 'awards':
+            rel = 'AwardsAmendmentsChanges';
             break;
         case 'contracts':
+            rel = 'ContractsAmendmentsChanges';
             break;
         default:
-            res.status(400).jsonp({
+            res.jsonp({
                 status: 'Error',
-                message: 'Parámetros incorrectos'
+                message: 'Opción desconocida'
             });
     }
+
+    db_conf.edca_db.one('delete from ~$1 where id=$2 returning id',[
+        rel,
+        req.body.change_id
+    ]).then(function (data) {
+        res.jsonp({
+            status: 'Ok',
+            data: data
+        });
+    }).catch(function (error) {
+        console.log(error);
+        res.status(400).jsonp({
+            status: 'Error',
+            error: error
+        });
+    });
 });
 
 //delete changes
 router.delete('/1.1/:path/changes', function (req, res) {
 
     //:path -> Tender, Awards, Contracts
-
+    var rel = '';
     switch ( req.params.path ){
         case 'tender':
+            rel = 'TenderAmendmentsChanges';
             break;
         case 'awards':
+            rel = 'AwardsAmendmentsChanges';
             break;
         case 'contracts':
+            rel = 'ContractsAmendmentsChanges';
             break;
         default:
             res.jsonp({
@@ -2135,15 +2228,15 @@ router.delete('/1.1/:path/changes', function (req, res) {
     }
 
     db_conf.edca_db.manyOrNone('delete from ~$1 where contractingprocess_id=$2 returning id',[
-        req.path.path,
+        rel,
         req.body.contractingprocess_id
-    ]).then(function (ids) {
+    ]).then(function (deleted_changes) {
         res.jsonp({
             status: 'Ok',
-            data: ids
-        })
+            data: deleted_changes
+        });
     }).catch(function (error) {
-        res.jsonp({
+        res.status(400).jsonp({
             status: 'Error',
             error: error
         });
